@@ -1,24 +1,26 @@
-# ClothingStateMenu
-A BepInEx plugin for some games made by Illusion/Illgames (Koikatu, Koikatsu Party, EmotionCreators, SamabakeScramble) that adds ability to toggle state of clothes and accessories of characters anywhere in maker and during gameplay. This makes it easy to see how clothes look when partially removed (useful for making clothes overlays) and to make partially dressed character card preview images.
+# Summer Vacation Scramble Character Exporter
+A BepInEx plugin for Summer Vacation Scramble to export characters to PMX.This plugin is in an early stage
 
 ## How to use
-Installation instructions are different depending on whether the game uses mono or IL2CPP runtime. The functionality of the plugin is mostly the same between the two, but there are some differences.
+Press Ctrl + Tab in the character maker, then a menu will appear
 
-### Mono (KK, KKS, EC)
-1. Install the latest versions of [BepInEx v5](https://github.com/BepInEx/BepInEx), [ModdingAPI](https://github.com/ManlyMarco/KKAPI) and [MoreAccessories](https://github.com/jalil49/MoreAccessories) for your game are installed, and your game is updated.
-2. Download the latest release.
-3. Extract the release to your game root. The plugin .dll should end up inside your 'BepInEx\plugins\ConfigurationManager' folder. Overwrite if asked.
-4. Remove BepInEx\ClothingStateMenu.dll if you have it (this is the old version).
-5. Start character maker. You should see a new checkbox in the bottom right corner. You can also talk to someone, then press Tab+Shift and a new window should appear. You can configure this plugin (including the hotkey) in plugin settings by searching for its name.
+<img width="667" height="717" alt="屏幕截图 2025-09-12 091324" src="https://github.com/user-attachments/assets/f5efa142-623a-47a6-b473-73aeb57b0fef" />
 
-### IL2CPP (SVS)
-1. Install the latest versions of [BepInEx v6](https://builds.bepis.io/bepinex_be) and [BepInEx.ConfigurationManager.IL2CPP](https://github.com/BepInEx/BepInEx.ConfigurationManager) for your game are installed, and your game is updated.
-2. Download the latest release.
-3. Extract the release to your game root. The plugin .dll should end up inside your 'BepInEx\plugins\ConfigurationManager' folder. Overwrite if asked.
-4. Remove BepInEx\ClothingStateMenu.dll if you have it (this is an old version).
-5. Start character maker or talk to someone, then press Tab+Shift and a new window should appear. You can configure this plugin (including the hotkey) in plugin settings by searching for its name.
+---
 
-![preview](https://user-images.githubusercontent.com/39247311/54150673-51efb780-4439-11e9-9f4f-e682def8e173.png)
+Click the Export button, a folder will pop up after a few minutes.
+
+<img width="873" height="601" alt="屏幕截图 2025-09-12 095526" src="https://github.com/user-attachments/assets/26d6ff46-3859-4d3a-9472-0893b3ccebc5" />
+
+---
+
+There are some JSON files, images and a model.pmx file in that folder.Now you can import the pmx into Blender to view the model.
+
+<img width="927" height="822" alt="屏幕截图 2025-09-12 100525" src="https://github.com/user-attachments/assets/88778fcc-4b53-411f-b42e-9a3d64976555" />
+
+---
+
+The model may look unusual and with no textures.These work will be done in the future
 
 ## Credits
-Based on the original ClothingStateMenu plugin made by essu.
+This plugin is based on [Illusion_ClothingStateMenu](https://github.com/ManlyMarco/Illusion_ClothingStateMenu) and [KKBP_Exporter](https://github.com/FlailingFog/KKBP_Exporter)
