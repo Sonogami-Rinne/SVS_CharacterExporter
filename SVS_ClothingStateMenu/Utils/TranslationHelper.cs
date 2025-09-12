@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using ClothingStateMenu;
+//using ClothingStateMenu;
 using XUnity.AutoTranslator.Plugin.Core;
 
 namespace IllusionMods
@@ -31,7 +31,7 @@ namespace IllusionMods
             }
             else
             {
-                ClothingStateMenuPlugin.Logger.LogWarning("Could not find method AutoTranslator.Default.TranslateAsync");
+                //ClothingStateMenuPlugin.Logger.LogWarning("Could not find method AutoTranslator.Default.TranslateAsync");
                 _translatorCallback = null;
             }
         }

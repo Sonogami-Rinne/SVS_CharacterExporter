@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace ClothingStateMenu.Utils
+namespace SVSExporter.Utils
 {
     /// <summary>
     /// Utility methods for working with IMGUI / OnGui.

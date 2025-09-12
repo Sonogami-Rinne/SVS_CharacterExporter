@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ClothingStateMenu
+namespace SVSExporter
 {
     public class ToggleButton : IStateToggleButton
     {

@@ -4,15 +4,15 @@
 		<Version>5.2</Version>
 
 		<!-- Sets the 'Company' field on the dll file -->
-		<Authors>https://github.com/ManlyMarco/Illusion_ClothingStateMenu</Authors>
+		<Authors></Authors>
 		<!-- Sets the 'Copyright' field on the dll file -->
-		<Copyright>Copyright LGPL-3.0 © 2020</Copyright>
+		<Copyright></Copyright>
 		<!-- Sets the 'Product name' field on the dll file -->
-		<Product>ClothingStateMenu</Product>
+		<Product>SVSExporter</Product>
 		<!-- Sets the 'File description' field on the dll file -->
-		<AssemblyTitle>Utility for toggling state of clothes and accessories in character maker, main game and H scenes</AssemblyTitle>
+		<AssemblyTitle>Export character model</AssemblyTitle>
 
-		<RootNamespace>ClothingStateMenu</RootNamespace>
+		<RootNamespace>SVSExporter</RootNamespace>
 
 		<OutputPath>..\bin\$(MSBuildProjectName)\</OutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>

@@ -2,7 +2,7 @@
 using Character;
 using UnityEngine;
 
-namespace ClothingStateMenu
+namespace SVSExporter
 {
     public class BodyButton : IStateToggleButton
     {

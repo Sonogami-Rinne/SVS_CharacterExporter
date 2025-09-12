@@ -1,31 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using Character;
 using CharacterCreation;
-using ClothingStateMenu.Utils;
+using ILLGames.Unity.AnimationKeyInfo;
 using IllusionMods;
+using SVSExporter.Utils;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
-// TODO: needs refactoring to use in svs and hc
-// TODO: merge more code with koi version?
-namespace ClothingStateMenu
+namespace SVSExporter
 {
-    [BepInPlugin(GUID, "Clothing State Menu", Version)]
+    [BepInPlugin(GUID, "SVS Exporter", Version)]
     [BepInProcess(GameUtilities.GameProcessName)]
-    public class ClothingStateMenuPlugin : BasePlugin
+    public class SVSExporterPlugin : BasePlugin
     {
         public const string Version = Constants.Version;
-        public const string GUID = "ClothingStateMenu";
+        public const string GUID = "SVSExporter";
 
         internal static ManualLogSource Logger { get; private set; }
-        private static ClothingStateMenuPlugin Instance { get; set; }
+        private static SVSExporterPlugin Instance { get; set; }
 
         private const float Margin = 5f;
         private const float WindowWidth = 125f;
@@ -45,6 +45,8 @@ namespace ClothingStateMenu
         private readonly ImguiComboBox _charaDropdown = new();
         private GUIContent[] _visibleCharasContents = Array.Empty<GUIContent>();
         private GUIContent _selectedCharaContent;
+        private PmxBuilder _pmxBuilder = new PmxBuilder();
+        public static string basePath = "Export_PMX";
 
         private ConfigEntry<Color> BackgroundColor { get; set; }
         private float _currentBackgroundAlpha;
@@ -73,14 +75,19 @@ namespace ClothingStateMenu
 
             BackgroundColor = Config.Bind("General", "Background Color", new Color(0, 0, 0, 0.5f), "Tint of the background color of the clothing state menu (subtle change). When mouse cursor hovers over the menu, transparency is forced to 1.");
 
-            Keybind = Config.Bind("General", "Toggle clothing state menu", new KeyboardShortcut(KeyCode.Tab, KeyCode.LeftShift), "Keyboard shortcut to toggle the clothing state menu on and off.\nCan be used outside of character maker in some cases - works for males in H scenes (the male has to be visible for the menu to appear) and in some conversations with girls.");
-            ShowCoordinateButtons = Config.Bind("Options", "Show coordinate change buttons in Character Maker", false, "Adds buttons to the menu that allow quickly switching between clothing sets. Same as using the clothing dropdown.\nThe buttons are always shown outside of character maker.");
-            ShowMainSub = Config.Bind("Options", "Show S/H in accessory list", true, "Show in the toggle list whether an accessory is set to Show (S) or Hide (H) in H scenes.");
+            Keybind = Config.Bind("General", "Toggle clothing state menu", new KeyboardShortcut(KeyCode.Tab, KeyCode.LeftControl), "Keyboard shortcut to toggle the clothing state menu on and off.\nCan be used outside of character maker in some cases - works for males in H scenes (the male has to be visible for the menu to appear) and in some conversations with girls.");
+            //ShowCoordinateButtons = Config.Bind("Options", "Show coordinate change buttons in Character Maker", false, "Adds buttons to the menu that allow quickly switching between clothing sets. Same as using the clothing dropdown.\nThe buttons are always shown outside of character maker.");
+            //ShowMainSub = Config.Bind("Options", "Show S/H in accessory list", true, "Show in the toggle list whether an accessory is set to Show (S) or Hide (H) in H scenes.");
 
-            AddComponent<ClothingStateMenuComponent>();
+            AddComponent<SVSExporterMenuComponent>();
+
+            if (!System.IO.File.Exists(basePath))
+            {
+                Directory.CreateDirectory(basePath);
+            }
         }
 
-        private sealed class ClothingStateMenuComponent : MonoBehaviour
+        private sealed class SVSExporterMenuComponent : MonoBehaviour
         {
             private void Update() => Instance.Update();
             private void OnGUI() => Instance.OnGUI();
@@ -99,7 +106,7 @@ namespace ClothingStateMenu
                 }
                 else
                 {
-                    _showInterface = false;
+                    _showInterface = true;
                 }
             }
         }
@@ -111,7 +118,6 @@ namespace ClothingStateMenu
                 _selectedChara = _visibleCharas.FirstOrDefault();
 
             _visibleCharasContents = _visibleCharas.Select(x => new GUIContent(x.fileParam.GetCharaName(true))).ToArray();
-
             var anyChara = _selectedChara != null;
             if (anyChara)
             {
@@ -161,7 +167,7 @@ namespace ClothingStateMenu
 
             // To allow mouse draging the skin has to have solid background, box works fine
             var style = _currentBackgroundAlpha == 0 ? GUI.skin.label : GUI.skin.box;
-            _windowRect = GUILayout.Window(90876322, _windowRect, (GUI.WindowFunction)WindowFunc, GUIContent.none, style, _NoLayoutOptions);
+            _windowRect = GUILayout.Window(90876311, _windowRect, (GUI.WindowFunction)WindowFunc, GUIContent.none, style, _NoLayoutOptions);
 
             void WindowFunc(int id)
             {
@@ -191,19 +197,6 @@ namespace ClothingStateMenu
                 }
                 GUILayout.Space(5);
 
-                var showAccessory = _selectedChara.fileStatus.showAccessory;
-
-                _accessorySlotsScrollPos = GUILayout.BeginScrollView(_accessorySlotsScrollPos, _NoLayoutOptions);
-                {
-                    // Not worthwhile to virtualize, far too few items
-                    for (var j = 0; j < showAccessory.Length; j++)
-                    {
-                        if (_selectedChara.cloth.nowCoordinate.Accessory.parts[j].type != 120)
-                            DrawAccesoryButton(j, showAccessory[j]);
-                    }
-                }
-                GUILayout.EndScrollView();
-
                 var w = _windowRect.width;
                 _windowRect = IMGUIUtils.DragResizeEat(id, _windowRect);
                 // Only resize width
@@ -212,49 +205,17 @@ namespace ClothingStateMenu
                 _charaDropdown.DrawDropdownIfOpen();
             }
 
-            if (!GameUtilities.InsideMaker || ShowCoordinateButtons.Value)
-            {
-                for (var i = 0; i < CoordCount; i++)
-                {
-                    var btn = _coordButtons[i];
-                    if (GUI.Button(new Rect(btn.Position.x + _windowRect.x, btn.Position.y + _windowRect.y, btn.Position.width, btn.Position.height), btn.Content))
-                        btn.OnClick();
-                }
-            }
+            //if (!GameUtilities.InsideMaker || ShowCoordinateButtons.Value)
+            //{
+            //    for (var i = 0; i < CoordCount; i++)
+            //    {
+            //        var btn = _coordButtons[i];
+            //        if (GUI.Button(new Rect(btn.Position.x + _windowRect.x, btn.Position.y + _windowRect.y, btn.Position.width, btn.Position.height), btn.Content))
+            //            btn.OnClick();
+            //    }
+            //}
         }
 
-        private void DrawAccesoryButton(int accIndex, bool isOn)
-        {
-            // Populate the cache with enough entries to cover the current index
-            // Major speedup over creating the content every frame (using string still creates new GUIContent internally)
-            while (_AccessoryButtonContentCache.Count <= accIndex)
-            {
-                var index = (_AccessoryButtonContentCache.Count + 1).ToString();
-                _AccessoryButtonContentCache.Add(new[] // on/off
-                {
-                    new GUIContent[] // show/hide in h scene
-                    {
-                        new($"S Slot {index}: On"),
-                        new($"H Slot {index}: On"),
-                        new($"Slot {index}: On"),
-                    },
-                    new GUIContent[]
-                    {
-                        new($"S Slot {index}: Off"),
-                        new($"H Slot {index}: Off"),
-                        new($"Slot {index}: Off"),
-                    }
-                });
-            }
-
-            var accTypeIndex = ShowMainSub.Value ? _selectedChara.cloth.nowCoordinate.Accessory.parts[accIndex].hideCategory : 2;
-
-            var acc = _AccessoryButtonContentCache[accIndex][isOn ? 0 : 1][accTypeIndex];
-            if (GUILayout.Button(acc, _NoLayoutOptions))
-                _selectedChara.acs.SetAccessoryState(accIndex, !isOn);
-
-            GUILayout.Space(-5);
-        }
 
         private bool _lastValueAccShow = true;
         private bool _lastValueAccHide = true;
@@ -266,27 +227,28 @@ namespace ClothingStateMenu
             _buttons.Clear();
 
             // Let the window auto-size and keep the position while outside maker
-            _windowRect = new Rect(x: _windowRect.x != 0 ? _windowRect.x : Margin + coordWidth,
-                                   y: _windowRect.y != 0 ? _windowRect.y : Screen.height - Margin - 400,
+            _windowRect = new Rect(x: _windowRect.x != 0 ? _windowRect.x : Screen.width / 2 - 20,
+                                   y: _windowRect.y != 0 ? _windowRect.y : 20,
                                    width: WindowWidth,
-                                   height: 200);
+                                   height: 50);
 
             // Clothing piece state buttons
-            foreach (ChaFileDefine.ClothesKind kind in Enum.GetValues(typeof(ChaFileDefine.ClothesKind)))
-            {
-                _buttons.Add(new ClothButton(kind, _selectedChara));
-            }
+            //foreach (ChaFileDefine.ClothesKind kind in Enum.GetValues(typeof(ChaFileDefine.ClothesKind)))
+            //{
+            //    _buttons.Add(new ClothButton(kind, _selectedChara));
+            //}
             // Invisible body
-            _buttons.Add(new BodyButton(_selectedChara));
+            //_buttons.Add(new BodyButton(_selectedChara));
 
 
-            _buttons.Add(null);
-            _buttons.Add(new ActionButton("All accs On", () => _selectedChara.acs.SetAccessoryStateAll(true)));
-            _buttons.Add(new ActionButton("All accs Off", () => _selectedChara.acs.SetAccessoryStateAll(false)));
+            //_buttons.Add(null);
+            _buttons.Add(new ActionButton("Export", () =>
+            {
+                var mainChara = GameUtilities.GetCurrentHumans(false).ToArray().FirstOrDefault();
 
-            _buttons.Add(null);
-            _buttons.Add(new ActionButton("Shown in H", () => _selectedChara.acs.SetAccessoryStateCategory(0, _lastValueAccShow = !_lastValueAccShow)));
-            _buttons.Add(new ActionButton("Hidden in H", () => _selectedChara.acs.SetAccessoryStateCategory(1, _lastValueAccHide = !_lastValueAccHide)));
+                _pmxBuilder.BuildStart(mainChara.fileParam.GetCharaName(false), mainChara.sex);
+                //_pmxBuilder.test();
+            }));
 
             // Coordinate change buttons
             Action<int> setCoordAction = newVal =>

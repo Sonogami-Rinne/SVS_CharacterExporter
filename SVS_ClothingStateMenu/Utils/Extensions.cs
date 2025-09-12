@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using BepInEx.Logging;
-using ClothingStateMenu;
 using HarmonyLib;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -194,8 +193,8 @@ namespace RuntimeUnityEditor.Core.Utils
             // BUG: NOT IN 4.x
             var sceneBak = o.scene;
             o.SetActive(value);
-            if (sceneBak != o.scene)
-                ClothingStateMenuPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, $"Scene of GameObject [{o.name}] changed from [{sceneBak.name ?? "NULL"}] to [{o.scene.name ?? "NULL"}]");
+            //if (sceneBak != o.scene)
+            //    ClothingStateMenuPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, $"Scene of GameObject [{o.name}] changed from [{sceneBak.name ?? "NULL"}] to [{o.scene.name ?? "NULL"}]");
         }
 
         /// <summary>

@@ -6,7 +6,7 @@
 using System;
 using UnityEngine;
 
-namespace ClothingStateMenu.Utils
+namespace SVSExporter.Utils
 {
     /// <summary>
     /// Dropdown control for use in GUILayout areas and windows. Keep the instance and call Show on it to draw it inside OnGUI.
