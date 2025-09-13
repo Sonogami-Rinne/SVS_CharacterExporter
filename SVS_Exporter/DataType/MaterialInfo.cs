@@ -13,6 +13,7 @@ internal class MaterialInfo
 	public List<string> ShaderPropTextureValues = new List<string>();
 	public List<List<float>> ShaderPropColorValues = new List<List<float>>();
 	public List<float> ShaderPropFloatValues = new List<float>();
+	public List<string> ShaderPropUnhandled = new List<string>();
 	//public List<Color> ShaderPropColorValues = new List<Color>();
 
     public MaterialInfo(Material material, string _materialName)
@@ -51,6 +52,10 @@ internal class MaterialInfo
                 ShaderPropNames.Add(property + " " + "Color" + " " + ShaderPropColorValues.Count);
                 ShaderPropColorValues.Add(ConvertColor(material.GetColor(property)));
             }
+			else
+			{
+				ShaderPropUnhandled.Add(property);
+			}
         }
 		//MaterialShader materialShader2 = MaterialShaders.materialShaders.Find((MaterialShader materialShader) => string.CompareOrdinal(materialShader.shaderName, ShaderName) == 0);
 		//if (materialShader2 == null)

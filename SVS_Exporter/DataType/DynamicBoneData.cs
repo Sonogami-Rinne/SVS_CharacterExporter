@@ -102,7 +102,7 @@ internal class DynamicBoneData
 		EndOffset = dynamicBone.m_EndOffset;
 		Gravity = dynamicBone.m_Gravity;
 		Force = dynamicBone.m_Force;
-		foreach (DynamicBoneCollider collider in dynamicBone.m_Colliders)
+		foreach (var collider in dynamicBone.m_Colliders)
 		{
 			if (!(collider == null))
 			{

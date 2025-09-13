@@ -258,15 +258,15 @@ internal class PmxBuilder
 			//	CreateAccessoryData();
 			//	CreateChaFileCoordinateData();
 			//	CreateReferenceInfoData();
-			//	try
-			//	{
-			//		CreateDynamicBonesData();
-			//		CreateDynamicBoneCollidersData();
-			//	}
-			//	catch (Exception ex)
-			//	{
-			//		Console.WriteLine(ex);
-			//	}
+			try
+			{
+				CreateDynamicBonesData();
+				CreateDynamicBoneCollidersData();
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex);
+			}
 			//	CreateAccessoryStateData();
 			//	CreateListInfoData();
 			//	SaveBodyTextures();
@@ -411,7 +411,7 @@ internal class PmxBuilder
 			{
 				var _tmp = (SkinnedMeshRenderer)smr;
                 _tmp.BakeMesh(mesh);
-				mesh.colors = _tmp.sharedMesh.colors;
+				//mesh.colors = _tmp.sharedMesh.colors;
 				probeUsage = _tmp.lightProbeUsage;
 				probeAnchor = _tmp.probeAnchor;
 				probeCastingMode = _tmp.shadowCastingMode;
@@ -535,20 +535,25 @@ internal class PmxBuilder
                 int textureheight;
                 try
 				{
-                    if (material.mainTexture != null)
-                    {
-                        int baseLength = Math.Max(material.mainTexture.width, material.mainTexture.height);
-                        texturewidth = baseLength * horizontalBlockCount;
-                        textureheight = baseLength * verticalBlockCount;
-                    }
-                    else
-                    {
-                        texturewidth = 1024 * horizontalBlockCount;
-                        textureheight = 1024 * verticalBlockCount;
-                    }
-					for (int k = 0; k < material.passCount; k++)
+					Texture mainTex = null;
+					if (material.HasProperty("_Main_texture"))
 					{
-						Console.WriteLine(material.GetPassName(k));
+						mainTex = material.GetTexture("_Main_texture");
+					}
+					else if (material.HasProperty("_Create_main_texture"))
+					{
+						mainTex = material.GetTexture("_Create_main_texture");
+					}
+					if (mainTex != null)
+					{
+						int baseLength = Math.Max(mainTex.width, mainTex.height);
+						texturewidth = baseLength * horizontalBlockCount;
+						textureheight = baseLength * verticalBlockCount;
+					}
+					else
+					{
+						texturewidth = 1024 * horizontalBlockCount;
+						textureheight = 1024 * verticalBlockCount;
 					}
 					
 					if (material.HasProperty("_DetailNormal"))
@@ -595,47 +600,6 @@ internal class PmxBuilder
 					{
 						material.SetTexture("_Cloth_alpha_bot", null);
 					}
-                    //if (material.HasProperty("_SpecularPower"))
-                    //{
-                    //	material.SetFloat("_SpecularPower", 0f);
-                    //}
-                    //if (material.HasProperty("_SpecularPowerNail"))
-                    //{
-                    //	material.SetFloat("_SpecularPowerNail", 0f);
-                    //}
-                    //if (material.HasProperty("_NormalMap"))
-                    //{
-                    //	material.SetTexture("_NormalMap", null);
-                    //}
-                    //if (material.HasProperty("_NormalMap_ST"))
-                    //{
-                    //	material.SetTexture("_NormalMap_ST", null);
-                    //}
-                    //if (material.HasProperty("_NormalMapDetail"))
-                    //{
-                    //	material.SetTexture("_NormalMapDetail", null);
-                    //}
-                    //if (material.HasProperty("_NormalMapDetail_ST"))
-                    //{
-                    //	material.SetTexture("_NormalMapDetail_ST", null);
-                    //}
-                    //if (material.HasProperty("_NormalMask"))
-                    //{
-                    //	material.SetTexture("_NormalMask", null);
-                    //}
-                    //if (material.HasProperty("_NormalMask_ST"))
-                    //{
-                    //	material.SetTexture("_NormalMask_ST", null);
-                    //}
-                    //// Render eye hightlight or not.
-                    ////if (material.HasProperty("_isHighLight"))
-                    ////{
-                    ////    material.SetFloat("_isHighLight", 0f);
-                    ////}
-                    //if (material.HasProperty("_nip_specular"))
-                    //{
-                    //	material.SetFloat("_nip_specular", 0f);
-                    //}
 
                     Color32[] lightColor;
 					Color32[] darkColor;
@@ -927,7 +891,7 @@ internal class PmxBuilder
 		{
 			ModelName = "Summer Vacation Scramble",
 			ModelNameE = "",
-			Comment = "exported Summer Vacation Scramble"
+			Comment = "Exported Summer Vacation Scramble"
 		};
 		pmxModelInfo.Comment = "";
 		pmxFile.ModelInfo = pmxModelInfo;
@@ -2478,10 +2442,10 @@ internal class PmxBuilder
         //ExportDataListToJson(clothesData, "KK_ClothesData.json");
         //ExportDataListToJson(accessoryData, "KK_AccessoryData.json");
         //ExportDataListToJson(referenceInfoData, "KK_ReferenceInfoData.json");
-        //      ExportDataListToJson(dynamicBonesData, "KK_DynamicBoneData.json");
-        //ExportDataListToJson(dynamicBoneCollidersData, "KK_DynamicBoneColliderData.json");
-        //ExportDataListToJson(accessoryStateData, "KK_AccessoryStateData.json");
-        ExportDataToJson(boneOffsetData, "KK_BoneOffsetData.json");
+        ExportDataToJson(dynamicBonesData, "KK_DynamicBoneData.json");
+        ExportDataToJson(dynamicBoneCollidersData, "KK_DynamicBoneColliderData.json");
+		//ExportDataListToJson(accessoryStateData, "KK_AccessoryStateData.json");
+		ExportDataToJson(boneOffsetData, "KK_BoneOffsetData.json");
         //ExportDataToJson(listInfoData, "KK_ListInfoData.json");
         //ExportChaFileCoordinateDataListToJson(chaFileCoordinateData, "KK_ChaFileCoordinateData.json");
         ExportDataToJson(editBoneInfo, "KK_EditBoneInfo.json");
