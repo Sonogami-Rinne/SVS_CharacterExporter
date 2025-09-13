@@ -1,18 +1,19 @@
 using Il2CppSystem.Net;
+using ILLGames.Unity.Component;
 using PmxLib;
 using SVSExporter;
+using SVSExporter.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Rendering;
-using System.IO.Compression;
-using SVSExporter.Utils;
 
 
 internal class PmxBuilder
@@ -183,6 +184,19 @@ internal class PmxBuilder
 
 	private byte sex;
 
+	private GameObject[] gameObjects;
+
+	private int index = -1;
+
+	public void test()
+	{
+        GameObject light = Light.FindObjectsOfType<Light>()[0].gameObject;
+		Light li = light.GetComponent<Light>();
+		Console.WriteLine(light.transform.position + "  " + light.transform.rotation);
+		Console.WriteLine(li.transform.position + "  " + li.transform.rotation);
+    }
+
+
 
     public void BuildStart(string charaName, byte sex)
 	{
@@ -303,13 +317,10 @@ internal class PmxBuilder
                 Camera camera = Camera.main;
 
                 light.transform.rotation = (UnityEngine.Quaternion)recoverInfos[0];
-                camera.orthographic = (bool)recoverInfos[1];
-                camera.aspect = (float)recoverInfos[2];
-                camera.orthographicSize = (float)recoverInfos[3];
-                camera.transform.position = (UnityEngine.Vector3)recoverInfos[4];
-                camera.transform.rotation = (UnityEngine.Quaternion)recoverInfos[5];
-                camera.clearFlags = (CameraClearFlags)recoverInfos[6];
-                camera.allowMSAA = (bool)recoverInfos[7];
+                light.transform.position = (UnityEngine.Vector3)recoverInfos[1];
+
+                camera.transform.position = (UnityEngine.Vector3)recoverInfos[2];
+                camera.transform.rotation = (UnityEngine.Quaternion)recoverInfos[3];
 
 				recoverInfos.Clear();
 			}
@@ -326,36 +337,35 @@ internal class PmxBuilder
     public void ExportLightTexture()
     {
         GameObject.Find("BodyTop").transform.Translate(new UnityEngine.Vector3(0, 10, 0));
-		//GameObject floorBar = GameObject.Find("Floor bar indicator");
-		//floorBar.SetActive(false);
+		GameObject.Find("Cvs_BackGround").GetComponent<Canvas>().enabled = false;
 
 		string[] ignoredSMRs = { "cf_O_gag_eye_00", "cf_O_gag_eye_01", "cf_O_gag_eye_02", "cf_O_namida_L", "cf_O_namida_M", "cf_O_namida_S", "Highlight_o_body_a_rend", "Highlight_cf_O_face_rend", "o_Mask" };
 
         GameObject light = Light.FindObjectsOfType<Light>()[0].gameObject;// The scene has only one light.But I'm failed to get the light by its name
-        Camera camera = Camera.main;
+		Camera camera = gameObjectMeshCopier.AddComponent<Camera>();
+		Camera cameraMain = Camera.main;
         SkinnedMeshRenderer meshCopier = gameObjectMeshCopier.GetComponent<SkinnedMeshRenderer>();
-        UnityEngine.Quaternion lightRotation = new UnityEngine.Quaternion(0, 1, 0, 0);
-		UnityEngine.Quaternion darkRotation = new UnityEngine.Quaternion(0, 0, 0, -1);
+        UnityEngine.Quaternion lightRotation = new UnityEngine.Quaternion(-0.03940f, 0.95533f, -0.21508f, -0.19882f);
+		UnityEngine.Quaternion darkRotation = new UnityEngine.Quaternion(0.16412f, -0.02926f, 0.00487f, 0.98600f);
+		UnityEngine.Vector3 lightPosition = new UnityEngine.Vector3(0.70f, 4.46f, 2.69f);
+		UnityEngine.Vector3 darkPosition = new UnityEngine.Vector3(-0.17f, 4.40f, 2.84f);
 
-		if (recoverInfos.Count == 0)
-		{
-			recoverInfos.Add(light.transform.rotation);
-			recoverInfos.Add(camera.orthographic);
-			recoverInfos.Add(camera.aspect);
-			recoverInfos.Add(camera.orthographicSize);
-			recoverInfos.Add(camera.transform.position);
-			recoverInfos.Add(camera.transform.rotation);
-			recoverInfos.Add(camera.clearFlags);
-			recoverInfos.Add(camera.allowMSAA);
 
-			camera.orthographic = true;
-			camera.aspect = 1f;
+        camera.CopyFrom(Camera.main);
+        recoverInfos.Add(light.transform.rotation);
+		recoverInfos.Add(light.transform.position);
+		recoverInfos.Add(camera.transform.position);
+		recoverInfos.Add(camera.transform.rotation);
 
-			camera.clearFlags = CameraClearFlags.SolidColor;
-			camera.allowMSAA = false;
-        }		
+		camera.orthographic = true;
+        camera.aspect = 1f;
 
-		for (int i = 0; i < meshRenders.Count; i++)
+        camera.clearFlags = CameraClearFlags.SolidColor;
+        camera.allowHDR = false;
+        camera.allowMSAA = false;
+        camera.cullingMask = 1 << 10;
+
+        for (int i = 0; i < meshRenders.Count; i++)
 		{
             var smr = meshRenders[i];
             string smrName = smr.name;
@@ -495,6 +505,8 @@ internal class PmxBuilder
 			camera.aspect = (float)horizontalBlockCount / verticalBlockCount;
 			camera.transform.position = positionFront;
 			camera.transform.LookAt(positionLookAt);
+			cameraMain.transform.position = positionFront;
+			cameraMain.transform.LookAt(positionLookAt);
 
 			for (int j = 0; j < Math.Min(smr.sharedMaterials.Length, subMeshCount); j++)
 			{
@@ -521,6 +533,10 @@ internal class PmxBuilder
                     }
 					material.SetShaderPassEnabled("OUTLINE", false);
 					material.SetShaderPassEnabled("SHADOWCASTER", false);
+					for (int k = 0; k < material.passCount; k++)
+					{
+						Console.WriteLine(material.GetPassName(k));
+					}
 
 					//if (material.HasProperty("_AlphaMask"))
 					//{
@@ -590,11 +606,11 @@ internal class PmxBuilder
 					Thread lightThread;
 					Thread darkThread;
 
-                    lightColor = render(lightRotation, j);
+                    lightColor = render(lightRotation, lightPosition, j);
                     lightThread = new Thread(() => shiftAndOverlay(lightColor, 2));
                     lightThread.Start();
 
-                    darkColor = render(darkRotation, j);
+                    darkColor = render(darkRotation, darkPosition, j);
                     darkThread = new Thread(() => shiftAndOverlay(darkColor, 2));
                     darkThread.Start();
 
@@ -605,18 +621,20 @@ internal class PmxBuilder
 					TextureSaver.SaveTexture(lightColor, texturewidth, textureheight, savePath + "/pre_light/" + matName + "_light.png");
                     TextureSaver.SaveTexture(darkColor, texturewidth, textureheight, savePath + "/pre_dark/" + matName + "_dark.png");
 
-                    Color32[] render(UnityEngine.Quaternion rotation, int subMeshIndex)
+                    Color32[] render(UnityEngine.Quaternion rotation, UnityEngine.Vector3 position, int subMeshIndex)
 					{
 						light.transform.rotation = rotation;
+						light.transform.position = position;
 						GL.Flush();
 
 						RenderTexture renderTexture = new RenderTexture(texturewidth, textureheight, 24, RenderTextureFormat.ARGB32);
 						renderTexture.antiAliasing = 1;
 						renderTexture.filterMode = FilterMode.Point;
 						renderTexture.Create();
-						camera.targetTexture = renderTexture;
+
+                        camera.targetTexture = renderTexture;
 						camera.backgroundColor = Color.clear;
-						Graphics.DrawMesh(mesh, Matrix4x4.identity, material, layer, camera, 0, materialPropertyBlock, probeCastingMode, receiveShadow, probeAnchor, probeUsage);
+                        Graphics.DrawMesh(mesh, Matrix4x4.identity, material, layer, camera, 0, materialPropertyBlock, probeCastingMode, receiveShadow, probeAnchor, probeUsage);
 						camera.Render();
 
 						RenderTexture.active = renderTexture;
@@ -692,9 +710,11 @@ internal class PmxBuilder
             }
 		}
         GameObject.Find("BodyTop").transform.Translate(new UnityEngine.Vector3(0, -10, 0));
-        //floorBar.SetActive(true);
+		GameObject.Find("Cvs_BackGround").GetComponent<Canvas>().enabled = true;
+        
+        //RenderSettings.skybox = tmp;
 
-		void uvIslandSolver(int[] triangles, UnityEngine.Vector3[] vertices)
+        void uvIslandSolver(int[] triangles, UnityEngine.Vector3[] vertices)
 		{
 			int[] parent = new int[vertices.Length];
 			float[] minX = new float[vertices.Length];
@@ -1829,22 +1849,22 @@ internal class PmxBuilder
 	//	AddCreateBodyMaterialsToComplete(characterControl.ctCreateEyeR.matCreate, "cf_Ohitomi_R02");
  //   }
 
-	public void AddCreateBodyMaterialsToComplete(Material mat, String name)
-		{
-			//Loop through the existing MaterialDataComplete material list to find what material to append the create information to
-            MaterialInfo matDataCreate = new MaterialInfo(mat, name);
-            foreach (MaterialDataComplete data in materialDataComplete)
-			{
-				foreach (MaterialInfo infoData in data.MatInfo)
-				{
-                    if (infoData.MaterialName.Contains(matDataCreate.MaterialName))
-					{
-						infoData.ShaderPropNames.AddRange(matDataCreate.ShaderPropNames);
-                        infoData.ShaderPropColorValues.AddRange(matDataCreate.ShaderPropColorValues);
-                    }
-                }
-			}
-		}
+	//public void AddCreateBodyMaterialsToComplete(Material mat, String name)
+	//	{
+	//		//Loop through the existing MaterialDataComplete material list to find what material to append the create information to
+ //           MaterialInfo matDataCreate = new MaterialInfo(mat, name);
+ //           foreach (MaterialDataComplete data in materialDataComplete)
+	//		{
+	//			foreach (MaterialInfo infoData in data.MatInfo)
+	//			{
+ //                   if (infoData.MaterialName.Contains(matDataCreate.MaterialName))
+	//				{
+	//					infoData.ShaderPropNames.AddRange(matDataCreate.ShaderPropNames);
+ //                       infoData.ShaderPropColorValues.AddRange(matDataCreate.ShaderPropColorValues);
+ //                   }
+ //               }
+	//		}
+	//	}
 
 	//public void GetCreateClothesMaterials()
 	//{

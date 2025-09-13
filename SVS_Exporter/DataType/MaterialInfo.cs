@@ -46,8 +46,8 @@ internal class MaterialInfo
                 }
                 else
                 {
-                    ShaderPropTextureValeus.Add(texture.name);
-					TextureSaver.SaveTexture(texture, PmxBuilder.savePath + texture.name + "_" + property + ".png");
+                    ShaderPropTextureValeus.Add(property);
+					TextureSaver.SaveTexture(texture, PmxBuilder.savePath + MaterialName + "_" + property + ".png");
                 }
             }
             else if (material.HasColor(property))
