@@ -12,11 +12,13 @@ internal class CharacterInfoData
 
 	public float PupilHeight;
 
-	public float PupilX;
-
 	public float PupilY;
 
-	public float HlUpY;
+    public float HlUpX;
+
+    public float HlUpY;
+
+	public float HlDownX;
 
 	public float HlDownY;
 
@@ -34,17 +36,21 @@ internal class CharacterInfoData
 
 	public List<float> pupilScale;
 
-	public List<float> highlightUpOffset;
+	public List<float> highlight01Offset;
 
-	public List<float> highlightUpScale;
+	public List<float> highlight01Scale;
 
-    public List<float> highlightDownOffset;
+    public List<float> highlight02Offset;
 
-    public List<float> highlightDownScale;
+    public List<float> highlight02Scale;
+    
+	public List<float> highlight03Offset;
 
-	public List<float> eyeRotation;
+    public List<float> highlight03Scale;
 
-	public List<float> highlightUpColor;
+	//public List<float> eyeRotation;
 
-	public List<float> highlightDownColor;
+	//public List<float> highlightUpColor;
+
+	//public List<float> highlightDownColor;
 }

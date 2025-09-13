@@ -1,8 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using PmxLib;
-using RuntimeUnityEditor.Core.Utils;
 using SVSExporter.Utils;
 using UnityEngine;
 
@@ -55,7 +51,6 @@ internal class MaterialInfo
                 ShaderPropNames.Add(property + " " + "Color" + " " + ShaderPropColorValues.Count);
                 ShaderPropColorValues.Add(ConvertColor(material.GetColor(property)));
             }
-			
         }
 		//MaterialShader materialShader2 = MaterialShaders.materialShaders.Find((MaterialShader materialShader) => string.CompareOrdinal(materialShader.shaderName, ShaderName) == 0);
 		//if (materialShader2 == null)

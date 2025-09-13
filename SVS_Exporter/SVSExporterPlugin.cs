@@ -246,8 +246,9 @@ namespace SVSExporter
             {
                 var mainChara = GameUtilities.GetCurrentHumans(false).ToArray().FirstOrDefault();
 
-                _pmxBuilder.BuildStart(mainChara.fileParam.GetCharaName(false), mainChara.sex);
-                //_pmxBuilder.test();
+                //_pmxBuilder.BuildStart(mainChara.fileParam.GetCharaName(false), mainChara.sex);
+                //mainChara.Reload();
+                _pmxBuilder.test();
             }));
 
             // Coordinate change buttons
