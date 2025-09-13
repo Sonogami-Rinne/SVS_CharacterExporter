@@ -228,7 +228,10 @@ internal class PmxBuilder
 				Directory.CreateDirectory(savePath + "/pre_light");
 				Directory.CreateDirectory(savePath + "/pre_dark");
 			}
-			if (!exportWithEnabledShapekeys)
+
+			CreateCharacterInfoData();
+
+            if (!exportWithEnabledShapekeys)
 			{
 				ClearMorphs();
 			}
@@ -2180,9 +2183,9 @@ internal class PmxBuilder
 		//item4.eyeRotation = new List<float>() { eyeMatControllerl._material.GetFloat("_rotation"), eyeMatControllerr._material.GetFloat("_rotation") };
 
 		characterInfoData.Add(item4);
-        ExportDataToJson(chaFileCustomFaceData, "KK_ChaFileCustomFace.json");
-        ExportDataToJson(chaFileCustomBodyData, "KK_ChaFileCustomBody.json");
-        ExportDataToJson(characterInfoData, "KK_CharacterInfoData.json");
+        ExportDataToJson(chaFileCustomFaceData, "SVS_ChaFileCustomFace.json");
+        ExportDataToJson(chaFileCustomBodyData, "SVS_ChaFileCustomBody.json");
+        ExportDataToJson(characterInfoData, "SVS_CharacterInfoData.json");
 	}
 
 	//public void CreateListInfoData()
@@ -2435,22 +2438,22 @@ internal class PmxBuilder
 
 	public void ExportAllDataLists()
 	{
-		ExportDataToJson(characterSMRData, "KK_SMRData.json");
-        ExportDataToJson(materialDataComplete, "KK_MaterialDataComplete.json");
+		ExportDataToJson(characterSMRData, "SVS_SMRData.json");
+        ExportDataToJson(materialDataComplete, "SVS_MaterialDataComplete.json");
         //ExportDataToJson(materialData, "KK_MaterialData.json");
-        ExportDataToJson(textureData, "KK_TextureData.json");
+        //ExportDataToJson(textureData, "KK_TextureData.json");
         //ExportDataListToJson(clothesData, "KK_ClothesData.json");
         //ExportDataListToJson(accessoryData, "KK_AccessoryData.json");
         //ExportDataListToJson(referenceInfoData, "KK_ReferenceInfoData.json");
-        ExportDataToJson(dynamicBonesData, "KK_DynamicBoneData.json");
-        ExportDataToJson(dynamicBoneCollidersData, "KK_DynamicBoneColliderData.json");
+        ExportDataToJson(dynamicBonesData, "SVS_DynamicBoneData.json");
+        ExportDataToJson(dynamicBoneCollidersData, "SVS_DynamicBoneColliderData.json");
 		//ExportDataListToJson(accessoryStateData, "KK_AccessoryStateData.json");
-		ExportDataToJson(boneOffsetData, "KK_BoneOffsetData.json");
+		ExportDataToJson(boneOffsetData, "SVS_BoneOffsetData.json");
         //ExportDataToJson(listInfoData, "KK_ListInfoData.json");
         //ExportChaFileCoordinateDataListToJson(chaFileCoordinateData, "KK_ChaFileCoordinateData.json");
-        ExportDataToJson(editBoneInfo, "KK_EditBoneInfo.json");
-        ExportDataToJson(finalBoneInfo.Values.ToList(), "KK_FinalBoneInfo.json");
-        ExportDataToJson(uvAdjustments, "KK_UVAdjustments.json");
+        ExportDataToJson(editBoneInfo, "SVS_EditBoneInfo.json");
+        ExportDataToJson(finalBoneInfo.Values.ToList(), "SVS_FinalBoneInfo.json");
+        ExportDataToJson(uvAdjustments, "SVS_UVAdjustments.json");
     }
 
 	public void OpenFolderInExplorer(string filename)
