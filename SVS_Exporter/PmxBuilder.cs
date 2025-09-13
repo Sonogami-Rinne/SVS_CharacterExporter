@@ -821,6 +821,12 @@ internal class PmxBuilder
 
     public void ChangeAnimations()
 	{
+		Human human = GameUtilities.GetCurrentHumans(false).ToArray().FirstOrDefault();
+		human.face.ChangeEyesBlinkFlag(false);
+		human.face.ChangeLookEyesTarget(1, null, 0f);
+		human.face.ChangeEyesPtn(0);
+		human.body.animBody.speed = 0f;
+		//human.body.animBody
 //		ChaControl characterControl = MakerAPI.GetCharacterControl();
 //		CustomBase makerBase = MakerAPI.GetMakerBase();
 //		CvsDrawCtrl cvsDrawCtrl = UnityEngine.Object.FindObjectOfType<CvsDrawCtrl>();
