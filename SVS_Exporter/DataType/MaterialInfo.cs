@@ -14,7 +14,7 @@ internal class MaterialInfo
     public bool isHair = false;
 
     public List<string> ShaderPropNames = new List<string>();
-	public List<string> ShaderPropTextureValeus = new List<string>();
+	public List<string> ShaderPropTextureValues = new List<string>();
 	public List<List<float>> ShaderPropColorValues = new List<List<float>>();
 	public List<float> ShaderPropFloatValues = new List<float>();
 	//public List<Color> ShaderPropColorValues = new List<Color>();
@@ -38,15 +38,15 @@ internal class MaterialInfo
             }
 			else if (material.HasTexture(property))
 			{
-                ShaderPropNames.Add(property + " " + "Texture" + " " + ShaderPropTextureValeus.Count);
+                ShaderPropNames.Add(property + " " + "Texture" + " " + ShaderPropTextureValues.Count);
                 Texture texture = material.GetTexture(property);
                 if (texture == null)
                 {
-                    ShaderPropNames.Add(null);
+                    ShaderPropTextureValues.Add(null);
                 }
                 else
                 {
-                    ShaderPropTextureValeus.Add(property);
+                    ShaderPropTextureValues.Add(property);
 					TextureSaver.SaveTexture(texture, PmxBuilder.savePath + MaterialName + "_" + property + ".png");
                 }
             }
@@ -55,6 +55,7 @@ internal class MaterialInfo
                 ShaderPropNames.Add(property + " " + "Color" + " " + ShaderPropColorValues.Count);
                 ShaderPropColorValues.Add(ConvertColor(material.GetColor(property)));
             }
+			
         }
 		//MaterialShader materialShader2 = MaterialShaders.materialShaders.Find((MaterialShader materialShader) => string.CompareOrdinal(materialShader.shaderName, ShaderName) == 0);
 		//if (materialShader2 == null)

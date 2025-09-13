@@ -531,77 +531,98 @@ internal class PmxBuilder
                         texturewidth = 1024 * horizontalBlockCount;
                         textureheight = 1024 * verticalBlockCount;
                     }
-					material.SetShaderPassEnabled("OUTLINE", false);
-					material.SetShaderPassEnabled("SHADOWCASTER", false);
 					for (int k = 0; k < material.passCount; k++)
 					{
 						Console.WriteLine(material.GetPassName(k));
 					}
+					
+					if (material.HasProperty("_DetailNormal"))
+					{
+						material.SetTexture("_DetailNormal", null);
+					}
+					if (material.HasProperty("_Matcap_mask"))
+					{
+						material.SetTexture("_Matcap_mask", null);
+					}
+					if (material.HasProperty("_Mat_cap_01"))
+					{
+						material.SetTexture("_Mat_cap_01", null);
+					}
+                    if (material.HasProperty("_Mat_cap_02"))
+                    {
+                        material.SetTexture("_Mat_cap_02", null);
+                    }
+                    if (material.HasProperty("_Mat_cap_03"))
+                    {
+                        material.SetTexture("_Mat_cap_03", null);
+                    }
+					if (material.HasProperty("unity_Lightmaps"))
+					{
+						material.SetTexture("unity_Lightmaps", null);
+					}
+					if (material.HasProperty("unity_LightmapsInd"))
+					{
+						material.SetTexture("unity_LightmapsInd", null);
+					}
+					if (material.HasProperty("_Normal"))
+					{
+						material.SetTexture("_Normal", null);
+					}
+					if (material.HasProperty("_Normal_map"))
+					{
+						material.SetTexture("_Normal_map", null);
+					}
+					if (material.HasProperty("_Cloth_alpha"))
+					{
+						material.SetTexture("_Cloth_alpha", null);
+					}
+					if (material.HasProperty("_Cloth_alpha_bot"))
+					{
+						material.SetTexture("_Cloth_alpha_bot", null);
+					}
+                    //if (material.HasProperty("_SpecularPower"))
+                    //{
+                    //	material.SetFloat("_SpecularPower", 0f);
+                    //}
+                    //if (material.HasProperty("_SpecularPowerNail"))
+                    //{
+                    //	material.SetFloat("_SpecularPowerNail", 0f);
+                    //}
+                    //if (material.HasProperty("_NormalMap"))
+                    //{
+                    //	material.SetTexture("_NormalMap", null);
+                    //}
+                    //if (material.HasProperty("_NormalMap_ST"))
+                    //{
+                    //	material.SetTexture("_NormalMap_ST", null);
+                    //}
+                    //if (material.HasProperty("_NormalMapDetail"))
+                    //{
+                    //	material.SetTexture("_NormalMapDetail", null);
+                    //}
+                    //if (material.HasProperty("_NormalMapDetail_ST"))
+                    //{
+                    //	material.SetTexture("_NormalMapDetail_ST", null);
+                    //}
+                    //if (material.HasProperty("_NormalMask"))
+                    //{
+                    //	material.SetTexture("_NormalMask", null);
+                    //}
+                    //if (material.HasProperty("_NormalMask_ST"))
+                    //{
+                    //	material.SetTexture("_NormalMask_ST", null);
+                    //}
+                    //// Render eye hightlight or not.
+                    ////if (material.HasProperty("_isHighLight"))
+                    ////{
+                    ////    material.SetFloat("_isHighLight", 0f);
+                    ////}
+                    //if (material.HasProperty("_nip_specular"))
+                    //{
+                    //	material.SetFloat("_nip_specular", 0f);
+                    //}
 
-					//if (material.HasProperty("_AlphaMask"))
-					//{
-					//	material.SetTexture("_AlphaMask", null);
-					//}
-					//if (material.HasProperty("_alpha_a"))
-					//{
-					//	alphaMaskAStage.Add((int)material.GetFloat("_alpha_a"));
-					//}
-					//else
-					//{
-					//	alphaMaskAStage.Add(-1);
-					//}
-					//if (material.HasProperty("_alpha_b"))
-					//{
-					//	alphaMaskBStage.Add((int)material.GetFloat("_alpha_b"));
-					//}
-					//else
-					//{
-					//	alphaMaskBStage.Add(-1);
-					//}
-
-					//if (material.HasProperty("_SpecularPower"))
-					//{
-					//	material.SetFloat("_SpecularPower", 0f);
-					//}
-					//if (material.HasProperty("_SpecularPowerNail"))
-					//{
-					//	material.SetFloat("_SpecularPowerNail", 0f);
-					//}
-					//if (material.HasProperty("_NormalMap"))
-					//{
-					//	material.SetTexture("_NormalMap", null);
-					//}
-					//if (material.HasProperty("_NormalMap_ST"))
-					//{
-					//	material.SetTexture("_NormalMap_ST", null);
-					//}
-					//if (material.HasProperty("_NormalMapDetail"))
-					//{
-					//	material.SetTexture("_NormalMapDetail", null);
-					//}
-					//if (material.HasProperty("_NormalMapDetail_ST"))
-					//{
-					//	material.SetTexture("_NormalMapDetail_ST", null);
-					//}
-					//if (material.HasProperty("_NormalMask"))
-					//{
-					//	material.SetTexture("_NormalMask", null);
-					//}
-					//if (material.HasProperty("_NormalMask_ST"))
-					//{
-					//	material.SetTexture("_NormalMask_ST", null);
-					//}
-					//// Render eye hightlight or not.
-					////if (material.HasProperty("_isHighLight"))
-					////{
-					////    material.SetFloat("_isHighLight", 0f);
-					////}
-					//if (material.HasProperty("_nip_specular"))
-					//{
-					//	material.SetFloat("_nip_specular", 0f);
-					//}
-
-					Color32[] lightColor;
+                    Color32[] lightColor;
 					Color32[] darkColor;
 					Thread lightThread;
 					Thread darkThread;
