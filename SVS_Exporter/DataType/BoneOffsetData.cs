@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using PmxLib;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ internal class BoneOffsetData
 
 	public string BoneName = "";
 
-	public UnityEngine.Vector3 Offset;
+	public List<float> Offset;
 
 	public BoneOffsetData(string boneName, PmxLib.Vector3 offset)
 	{
@@ -18,6 +19,6 @@ internal class BoneOffsetData
 			CoordinateType = PmxBuilder.nowCoordinate;
 		}
 		BoneName = boneName;
-		Offset = new UnityEngine.Vector3(offset.X, offset.Y, offset.Z);
+		Offset = new List<float>() { offset.x, offset.y, offset.z};
 	}
 }

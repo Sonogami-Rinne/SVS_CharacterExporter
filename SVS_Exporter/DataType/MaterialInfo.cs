@@ -7,7 +7,7 @@ internal class MaterialInfo
 {
 	public string MaterialName;
 	public string ShaderName;
-    public bool isHair = false;
+    //public bool isHair = false;
 
     public List<string> ShaderPropNames = new List<string>();
 	public List<string> ShaderPropTextureValues = new List<string>();
@@ -44,7 +44,7 @@ internal class MaterialInfo
                 else
                 {
                     ShaderPropTextureValues.Add(property);
-					TextureSaver.SaveTexture(texture, PmxBuilder.savePath + MaterialName + "_" + property + ".png");
+					TextureSaver.SaveTexture(texture, PmxBuilder.currentSavePath + MaterialName + "_" + property + ".png");
                 }
             }
             else if (material.HasColor(property))

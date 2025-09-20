@@ -26,12 +26,6 @@ internal class CharacterInfoData
 
 	public List<float> ShapeInfoBody = new List<float>();
 
-	public float eyeOpenMax;
-
-	public float eyebrowOpenMax;
-
-	public float mouthOpenMax;
-
 	public List<float> pupilOffset;
 
 	public List<float> pupilScale;
@@ -47,10 +41,4 @@ internal class CharacterInfoData
 	public List<float> highlight03Offset;
 
     public List<float> highlight03Scale;
-
-	//public List<float> eyeRotation;
-
-	//public List<float> highlightUpColor;
-
-	//public List<float> highlightDownColor;
 }

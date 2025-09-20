@@ -31,11 +31,11 @@ internal class DynamicBoneData
 
 	public float EndLength;
 
-	public Vector3 EndOffset;
+	public List<float> EndOffset;
 
-	public Vector3 Gravity;
+	public List<float> Gravity;
 
-	public Vector3 Force;
+	public List<float> Force;
 
 	public List<string> Colliders = new List<string>();
 
@@ -55,7 +55,7 @@ internal class DynamicBoneData
 
 	public List<float> ParticleElasticity = new List<float>();
 
-	public List<Vector3> ParticleEndOffset = new List<Vector3>();
+	public List<List<float>> ParticleEndOffset = new List<List<float>>();
 
 	public List<float> ParticleInert = new List<float>();
 
@@ -99,9 +99,9 @@ internal class DynamicBoneData
 			RadiusDistrib = PmxBuilder.AnimationCurveToJSON(dynamicBone.m_RadiusDistrib);
 		}
 		EndLength = dynamicBone.m_EndLength;
-		EndOffset = dynamicBone.m_EndOffset;
-		Gravity = dynamicBone.m_Gravity;
-		Force = dynamicBone.m_Force;
+		EndOffset = new List<float>() { dynamicBone.m_EndOffset.x, dynamicBone.m_EndOffset.y, dynamicBone.m_EndOffset.z };
+		Gravity = new List<float>() { dynamicBone.m_Gravity .x, dynamicBone.m_Gravity .y, dynamicBone.m_Gravity .z};
+		Force = new List<float>() { dynamicBone.m_Force .x, dynamicBone.m_Force .y, dynamicBone.m_Force .z};
 		foreach (var collider in dynamicBone.m_Colliders)
 		{
 			if (!(collider == null))
@@ -141,11 +141,12 @@ internal class DynamicBoneData
 			if (particle.m_ParentIndex >= 1)
 			{
 				Transform transform = dynamicBone.m_Particles[particle.m_ParentIndex].m_Transform;
-				ParticleEndOffset.Add(transform.rotation * particle.m_EndOffset);
+				var tmp = transform.rotation * particle.m_EndOffset;
+                ParticleEndOffset.Add(new List<float>() { tmp.x, tmp.y, tmp.z});
 			}
 			else
 			{
-				ParticleEndOffset.Add(particle.m_EndOffset);
+				ParticleEndOffset.Add(new List<float>() { particle.m_EndOffset .x, particle.m_EndOffset .y, particle.m_EndOffset .z});
 			}
 			ParticleInert.Add(particle.m_Inert);
 			ParticleRadius.Add(particle.m_Radius);

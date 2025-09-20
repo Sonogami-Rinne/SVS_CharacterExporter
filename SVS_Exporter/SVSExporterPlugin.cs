@@ -3,17 +3,18 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
 using Character;
-using CharacterCreation;
-using ILLGames.Unity.AnimationKeyInfo;
 using IllusionMods;
+using RuntimeUnityEditor.Core.Utils;
 using SVSExporter.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UI;
-using Object = UnityEngine.Object;
+using BepInEx.Unity.IL2CPP.Utils;
+using System.Collections;
+using XUnity.AutoTranslator.Plugin.Core.Utilities;
+using BepInEx.Unity.IL2CPP.Utils.Collections;
 
 namespace SVSExporter
 {
@@ -35,18 +36,19 @@ namespace SVSExporter
 
         private readonly List<IStateToggleButton> _buttons = new();
         private const int CoordCount = 3; //todo make this not hardcoded
-        private readonly CoordButton[] _coordButtons = new CoordButton[CoordCount];
+        //private readonly CoordButton[] _coordButtons = new CoordButton[CoordCount];
 
         private Rect _windowRect;
         private Vector2 _accessorySlotsScrollPos = Vector2.zero;
 
         private Human[] _visibleCharas = Array.Empty<Human>();
-        private Human _selectedChara;
+        public static Human selectedChara;
         private readonly ImguiComboBox _charaDropdown = new();
         private GUIContent[] _visibleCharasContents = Array.Empty<GUIContent>();
         private GUIContent _selectedCharaContent;
-        private PmxBuilder _pmxBuilder = new PmxBuilder();
+        private PmxBuilder _pmxBuilder;
         public static string basePath = "Export_PMX";
+        private SVSExporterMenuComponent component;
 
         private ConfigEntry<Color> BackgroundColor { get; set; }
         private float _currentBackgroundAlpha;
@@ -79,7 +81,7 @@ namespace SVSExporter
             //ShowCoordinateButtons = Config.Bind("Options", "Show coordinate change buttons in Character Maker", false, "Adds buttons to the menu that allow quickly switching between clothing sets. Same as using the clothing dropdown.\nThe buttons are always shown outside of character maker.");
             //ShowMainSub = Config.Bind("Options", "Show S/H in accessory list", true, "Show in the toggle list whether an accessory is set to Show (S) or Hide (H) in H scenes.");
 
-            AddComponent<SVSExporterMenuComponent>();
+            component = AddComponent<SVSExporterMenuComponent>();
 
             if (!System.IO.File.Exists(basePath))
             {
@@ -102,7 +104,7 @@ namespace SVSExporter
                 if (value)
                 {
                     RefreshCharacterList();
-                    _showInterface = _selectedChara != null;
+                    _showInterface = selectedChara != null;
                 }
                 else
                 {
@@ -114,14 +116,14 @@ namespace SVSExporter
         private bool RefreshCharacterList()
         {
             _visibleCharas = GameUtilities.GetCurrentHumans(false).ToArray();
-            if (_selectedChara == null || !_visibleCharas.Contains(_selectedChara))
-                _selectedChara = _visibleCharas.FirstOrDefault();
+            if (selectedChara == null || !_visibleCharas.Contains(selectedChara))
+                selectedChara = _visibleCharas.FirstOrDefault();
 
             _visibleCharasContents = _visibleCharas.Select(x => new GUIContent(x.fileParam.GetCharaName(true))).ToArray();
-            var anyChara = _selectedChara != null;
+            var anyChara = selectedChara != null;
             if (anyChara)
             {
-                _selectedCharaContent = _visibleCharasContents[Array.IndexOf(_visibleCharas, _selectedChara)];
+                _selectedCharaContent = _visibleCharasContents[Array.IndexOf(_visibleCharas, selectedChara)];
                 SetupInterface();
             }
             else
@@ -140,7 +142,7 @@ namespace SVSExporter
 
             if (_showInterface)
             {
-                if (!_selectedChara?.transform)
+                if (!selectedChara?.transform)
                 {
                     if (!RefreshCharacterList())
                         return;
@@ -160,6 +162,11 @@ namespace SVSExporter
             if (!ShowInterface)
                 return;
 
+            if (!GameUtilities.InsideMaker)
+            {
+                return;
+            }
+
             var backgroundColor = BackgroundColor.Value;
             backgroundColor.a = _currentBackgroundAlpha;
 
@@ -178,7 +185,7 @@ namespace SVSExporter
 
                 _charaDropdown.Show(_selectedCharaContent, () => _visibleCharasContents, i =>
                 {
-                    _selectedChara = _visibleCharas[i];
+                    selectedChara = _visibleCharas[i];
                     RefreshCharacterList();
                 }, (int)_windowRect.yMax);
 
@@ -204,25 +211,12 @@ namespace SVSExporter
 
                 _charaDropdown.DrawDropdownIfOpen();
             }
-
-            //if (!GameUtilities.InsideMaker || ShowCoordinateButtons.Value)
-            //{
-            //    for (var i = 0; i < CoordCount; i++)
-            //    {
-            //        var btn = _coordButtons[i];
-            //        if (GUI.Button(new Rect(btn.Position.x + _windowRect.x, btn.Position.y + _windowRect.y, btn.Position.width, btn.Position.height), btn.Content))
-            //            btn.OnClick();
-            //    }
-            //}
         }
 
-
-        private bool _lastValueAccShow = true;
-        private bool _lastValueAccHide = true;
         private void SetupInterface()
         {
-            const float coordWidth = 25f;
-            const float coordHeight = 20f;
+            //const float coordWidth = 25f;
+            //const float coordHeight = 20f;
 
             _buttons.Clear();
 
@@ -232,54 +226,21 @@ namespace SVSExporter
                                    width: WindowWidth,
                                    height: 50);
 
-            // Clothing piece state buttons
-            //foreach (ChaFileDefine.ClothesKind kind in Enum.GetValues(typeof(ChaFileDefine.ClothesKind)))
-            //{
-            //    _buttons.Add(new ClothButton(kind, _selectedChara));
-            //}
-            // Invisible body
-            //_buttons.Add(new BodyButton(_selectedChara));
-
-
-            //_buttons.Add(null);
             _buttons.Add(new ActionButton("Export", () =>
             {
-                var mainChara = GameUtilities.GetCurrentHumans(false).ToArray().FirstOrDefault();
+                _pmxBuilder = new PmxBuilder();
+                component.StartCoroutine(_pmxBuilder.BuildStart().WrapToIl2Cpp());
 
-                _pmxBuilder.BuildStart(mainChara.fileParam.GetCharaName(false), mainChara.sex);
-                mainChara.Reload();
-                //_pmxBuilder.test();
+                //PmxBuilder.test();
             }));
-
-            // Coordinate change buttons
-            Action<int> setCoordAction = newVal =>
+            _buttons.Add(new ActionButton("ExportAll", () =>
             {
-                if (GameUtilities.InsideMaker)
-                {
-                    try
-                    {
-                        var ctc = Object.FindObjectOfType<CoordinateTypeChange>();
-                        var c = ctc._coordeTypesRoot.GetChild(newVal);
-                        c.GetComponent<Toggle>().isOn = true;
-                        return;
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.LogError(e);
-                    }
-                }
+                _pmxBuilder = new PmxBuilder();
+                _pmxBuilder.exportAllOutfits = true;
+                component.StartCoroutine(_pmxBuilder.BuildStart().WrapToIl2Cpp());
 
-                _selectedChara.coorde.SetNowCoordinate(_selectedChara.data.Coordinates[newVal]);
-                _selectedChara.ReloadCoordinate();
-            };
-            for (var i = 0; i < CoordCount; i++)
-            {
-                var position = new Rect(x: -coordWidth,
-                                        y: 4 + coordHeight * i,
-                                        width: coordWidth,
-                                        height: coordHeight);
-                _coordButtons[i] = new CoordButton(i, setCoordAction, position);
-            }
+                //PmxBuilder.test();
+            }));
         }
     }
 }

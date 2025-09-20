@@ -53,6 +53,10 @@ public static class CustomJsonSerializer
         {
             sb.Append(value.ToString().ToLower());
         }
+        else if (type.IsEnum)
+        {
+            sb.Append(Convert.ToInt32(value).ToString());
+        }
 
         else if (type.IsArray || (typeof(IList).IsAssignableFrom(type) && type.IsGenericType))
         {
@@ -64,7 +68,7 @@ public static class CustomJsonSerializer
             SerializeDictionary(value, sb, visitedObjects);
         }
 
-        else if (type.GetCustomAttribute<SerializableAttribute>() != null)
+        else if (type.IsValueType || type.GetCustomAttribute<SerializableAttribute>() != null)
         {
             SerializeObject(value, sb, visitedObjects);
         }
@@ -171,6 +175,9 @@ public static class CustomJsonSerializer
 
         foreach (var property in properties)
         {
+            if (property.GetIndexParameters().Length > 0)
+                continue;
+
             if (property.CanRead)
             {
                 if (!first) sb.Append(',');
@@ -187,7 +194,7 @@ public static class CustomJsonSerializer
         {
             if (field.GetCustomAttribute<NonSerializedAttribute>() != null)
             {
-                continue; 
+                continue;
             }
 
             if (!first) sb.Append(',');
