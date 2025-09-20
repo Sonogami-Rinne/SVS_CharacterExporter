@@ -2222,6 +2222,7 @@ internal class PmxBuilder
 
 		characterInfoData.Add(item4);
         ExportDataToJson(characterInfoData, "SVS_CharacterInfoData.json");
+		ExportDataToJson(blendShapeinfos, "SVS_BlendShapeInfo.json");
 	}
 
 	//public void CreateListInfoData()
