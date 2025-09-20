@@ -514,7 +514,7 @@ internal class PmxBuilder
 
             for (int j = 0; j < Math.Min(smr.sharedMaterials.Length, subMeshCount); j++)
             {
-                if (meshRenders[i].sharedMaterials[j] == null) continue;
+                if (meshRenders[i].sharedMaterials[j] == null || meshRenders[i].sharedMaterials[j].shader.name == "LIF/lif_main_hair_outline") continue;
                 Material material = new Material(meshRenders[i].sharedMaterials[j]);
 
                 string matName = smrMaterialsCache[GetGameObjectPath(smr.gameObject)][j];
