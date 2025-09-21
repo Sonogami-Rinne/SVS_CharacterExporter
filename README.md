@@ -2,25 +2,43 @@
 A BepInEx plugin for Summer Vacation Scramble to export characters to PMX.This plugin is in an early stage
 
 ## How to use
+
+Put the .dll to plugin folder
+
+Put the file "head_02.unity3d" to "abdata\chara\head"
+<img width="999" height="343" alt="无标题" src="https://github.com/user-attachments/assets/d3818840-429d-4a39-b004-90ae29de8e90" />
+
+---
+
 Press Ctrl + Tab in the character maker, then a menu will appear
 
-<img width="667" height="717" alt="屏幕截图 2025-09-12 091324" src="https://github.com/user-attachments/assets/f5efa142-623a-47a6-b473-73aeb57b0fef" />
+<img width="516" height="683" alt="屏幕截图 2025-09-20 161910" src="https://github.com/user-attachments/assets/cf890c3f-7cb1-4e93-ae95-3ec936b47b9a" />
 
 ---
 
 Click the Export button, a folder will pop up after a few minutes.
 
-<img width="873" height="601" alt="屏幕截图 2025-09-12 095526" src="https://github.com/user-attachments/assets/26d6ff46-3859-4d3a-9472-0893b3ccebc5" />
+<img width="812" height="662" alt="屏幕截图 2025-09-21 164523" src="https://github.com/user-attachments/assets/4a453863-96f9-4916-a6bc-dbe2491768c2" />
 
 ---
 
-There are some JSON files, images and a model.pmx file in that folder.Now you can import the pmx into Blender to view the model.
-
-<img width="927" height="822" alt="屏幕截图 2025-09-12 100525" src="https://github.com/user-attachments/assets/88778fcc-4b53-411f-b42e-9a3d64976555" />
+Then use thid [plugin](https://github.com/Sonogami-Rinne/KK-Blender-Porter-Pac) to import the model.pmx in the folder(not the one in outfit folder)
+<img width="527" height="571" alt="屏幕截图 2025-09-21 164546" src="https://github.com/user-attachments/assets/71ab8fdd-6c01-48e0-b357-adaffba1df3a" />
 
 ---
 
-The model may look unusual and with no textures.These work will be done in the future
+After minutes, the model will appear
+
+<img width="683" height="752" alt="dwadADad" src="https://github.com/user-attachments/assets/103b7827-263e-4d2a-8be7-fec0c58a5ba3" />
+
+---
+## Issue
+
+Shape keys are currently unavailable
+
+Some Accessories may disappear due to missing uv when baking materials
+
+A better T-Pose mod is needed
 
 ## Credits
 This plugin is based on [Illusion_ClothingStateMenu](https://github.com/ManlyMarco/Illusion_ClothingStateMenu) and [KKBP_Exporter](https://github.com/FlailingFog/KKBP_Exporter)
