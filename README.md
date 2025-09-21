@@ -6,6 +6,7 @@ A BepInEx plugin for Summer Vacation Scramble to export characters to PMX.This p
 Put the .dll to plugin folder
 
 Put the file "head_02.unity3d" to "abdata\chara\head"
+
 <img width="999" height="343" alt="无标题" src="https://github.com/user-attachments/assets/d3818840-429d-4a39-b004-90ae29de8e90" />
 
 ---
@@ -22,7 +23,8 @@ Click the Export button, a folder will pop up after a few minutes.
 
 ---
 
-Then use thid [plugin](https://github.com/Sonogami-Rinne/KK-Blender-Porter-Pac) to import the model.pmx in the folder(not the one in outfit folder)
+Then Install the plugin for blender(modified from (https://github.com/FlailingFog/KK-Blender-Porter-Pack)) to import the model.pmx in the folder (not the one in outfit folder)
+
 <img width="527" height="571" alt="屏幕截图 2025-09-21 164546" src="https://github.com/user-attachments/assets/71ab8fdd-6c01-48e0-b357-adaffba1df3a" />
 
 ---
@@ -41,4 +43,4 @@ Some Accessories may disappear due to missing uv when baking materials
 A better T-Pose mod is needed
 
 ## Credits
-This plugin is based on [Illusion_ClothingStateMenu](https://github.com/ManlyMarco/Illusion_ClothingStateMenu) and [KKBP_Exporter](https://github.com/FlailingFog/KKBP_Exporter)
+This plugin is based on [Illusion_ClothingStateMenu](https://github.com/ManlyMarco/Illusion_ClothingStateMenu) and [KKBP_Exporter](https://github.com/FlailingFog/KKBP_Exporter), plugin for blender is based on [KK-Blender-Porter-Pack](https://github.com/FlailingFog/KK-Blender-Porter-Pack)
