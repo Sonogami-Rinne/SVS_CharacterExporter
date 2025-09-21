@@ -233,7 +233,7 @@ namespace SVSExporter
 
                 //PmxBuilder.test();
             }));
-            _buttons.Add(new ActionButton("ExportAll", () =>
+            _buttons.Add(new ActionButton("ExportAllOutfits", () =>
             {
                 _pmxBuilder = new PmxBuilder();
                 _pmxBuilder.exportAllOutfits = true;

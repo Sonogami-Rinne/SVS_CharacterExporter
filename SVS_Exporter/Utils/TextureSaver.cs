@@ -22,10 +22,6 @@ namespace SVSExporter.Utils
         }
         public static void SaveTexture(Texture texture, string path)
         {
-            if (texture.width <= 0 && texture.height <= 0)
-            {
-                return;
-            }
             RenderTexture temporary = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
             RenderTexture active = RenderTexture.active;
             RenderTexture.active = temporary;

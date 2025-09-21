@@ -7,21 +7,22 @@ internal class MaterialInfo
 {
 	public string MaterialName;
 	public string ShaderName;
-    //public bool isHair = false;
+    public bool isHair = false;
 
-    public List<string> ShaderPropNames = new List<string>();
+	public List<string> ShaderPropNames = new List<string>();
 	public List<string> ShaderPropTextureValues = new List<string>();
 	public List<List<float>> ShaderPropColorValues = new List<List<float>>();
 	public List<float> ShaderPropFloatValues = new List<float>();
 	public List<string> ShaderPropUnhandled = new List<string>();
-	//public List<Color> ShaderPropColorValues = new List<Color>();
 
     public MaterialInfo(Material material, string _materialName)
 	{
 		MaterialName = _materialName;
 		ShaderName = material.shader.name;
 		var properties = material.GetTexturePropertyNames();
-		foreach (string property in properties)
+        isHair = material.shader.name.Contains("hair", System.StringComparison.OrdinalIgnoreCase);
+
+        foreach (string property in properties)
 		{
 			if (material.HasFloat(property))
 			{

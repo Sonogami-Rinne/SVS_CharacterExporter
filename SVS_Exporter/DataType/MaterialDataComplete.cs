@@ -11,7 +11,7 @@ internal class MaterialDataComplete
     public int EnumIndex = -1;
     public string SMRName;
 
-    public List<MaterialInfo> MatInfo = new List<MaterialInfo>();
+    public List<MaterialInfo> MaterialInformation = new List<MaterialInfo>();
 
     public MaterialDataComplete(PmxBuilder pmxBuilder, Renderer smr)
     {
@@ -30,7 +30,7 @@ internal class MaterialDataComplete
                 name = PmxBuilder.CleanUpName(name);
                 name = ((!pmxBuilder.ignoreList.Contains(name, StringComparer.Ordinal) || !pmxBuilder.ignoreList.Contains(smr.name, StringComparer.Ordinal)) ? (name + " " + PmxBuilder.GetAltInstanceID(smr.transform.parent.gameObject)) : ((!name.Contains(pmxBuilder.EyeMatName)) ? name : (name + "_" + smr.name)));
                 //name = PmxBuilder.GetAltMaterialName(pmxBuilder, name);
-                MatInfo.Add(new MaterialInfo(smr.materials[i], name));
+                MaterialInformation.Add(new MaterialInfo(smr.materials[i], name));
                 //Console.WriteLine("Adding to json SMR: " + name);
             }
         }

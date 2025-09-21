@@ -1,5 +1,6 @@
 using Character;
 using CharacterCreation;
+using Il2CppSystem.Linq;
 using IllusionMods;
 using PmxLib;
 using SVSExporter;
@@ -17,18 +18,6 @@ using UnityEngine.Rendering;
 
 internal class PmxBuilder
 {
-	private class GagData
-	{
-		public string MainTex;
-
-		public int EyeObjNo;
-
-		public GagData(string mainTex, int eyeObjNo)
-		{
-			MainTex = mainTex;
-			EyeObjNo = eyeObjNo;
-		}
-	}
 
 	public string msg = "";
 
@@ -141,12 +130,9 @@ internal class PmxBuilder
 
 	private readonly int scale = 1;
 
-	private int[] vertics_num;
-
-	private string[] vertics_name;
-
 	private Dictionary<string, int> currentBoneKeysList = new Dictionary<string, int>();
 
+	private Dictionary<string, int> vertexCountRecord = new Dictionary<string, int>();
 
     private List<BoneInfo> editBoneInfo = new List<BoneInfo>();
 
@@ -169,15 +155,20 @@ internal class PmxBuilder
 
 	public static void test()
 	{
-		StateMiniSelection stateMiniSelection = GameObject.Find("Cvs_StateMiniWindow").GetComponent<StateMiniSelection>();
-		//StateMiniSelection stateMiniSelection = UnityEngine.Object.FindObjectOfType<StateMiniSelection>();
-		//var a = stateMiniSelection._posePack.PosePtn.get;
-		Human human = GameUtilities.GetCurrentHumans(false).ToArray().FirstOrDefault();
-		Console.WriteLine(human.fileStatus.coordinateType);
-		human.coorde.ChangeCoordinateType(ChaFileDefine.CoordinateType.Swimsuit);
-		human.ReloadCoordinate(Human.ReloadFlags.Coorde);
+        Human human = SVSExporterPlugin.selectedChara;
 
-	}
+        Renderer[] componentsInChildren = human.face.objHead.GetComponentsInChildren<Renderer>(includeInactive: true);
+        foreach (Renderer renderer in componentsInChildren)
+        {
+            Console.WriteLine("renderer: " + renderer.name);
+			Material[] materials = renderer.materials;
+			for (int j = 0; j < materials.Length; j++)
+			{
+				string text = CleanUpName(materials[j].name);
+				Console.WriteLine("texture: " + text);
+			}
+		}
+    }
 
 	public IEnumerator BuildStart()
 	{
@@ -223,7 +214,7 @@ internal class PmxBuilder
             Directory.CreateDirectory(currentSavePath + "/pre_dark");
             ClearMorphs();
 
-            SetSkinnedMeshList();
+            //SetSkinnedMeshList();
 			PrepareModel();
 
             if (nowCoordinate < maxCoord)
@@ -235,7 +226,7 @@ internal class PmxBuilder
             if (nowCoordinate == maxCoord)
             {
             	CreateMorph();
-				ExportGagEyes();
+				//ExportGagEyes();
 			}
 			AddAccessory();
 			ExportLightTexture();
@@ -361,7 +352,7 @@ internal class PmxBuilder
         GameObject.Find("BodyTop").transform.Translate(new UnityEngine.Vector3(0, 10, 0));
 
         string[] ignoredSMRs = { "cf_O_gag_eye_00", "cf_O_gag_eye_01", "cf_O_gag_eye_02", "cf_O_namida_L", "cf_O_namida_M", "cf_O_namida_S", "Highlight_o_body_a_rend", "Highlight_cf_O_face_rend", "o_Mask" };
-
+		string[] ignoredShaders = { "LIF/lit_hair_overlay", "LIF/lif_main_hair_outline" };
         GameObject light = Light.FindObjectsOfType<Light>()[0].gameObject;// The scene has only one light.But I'm failed to get the light by its name
         Camera camera = gameObjectMeshCopier.GetComponent<Camera>();
         Camera cameraMain = Camera.main;
@@ -437,31 +428,34 @@ internal class PmxBuilder
                 Console.WriteLine(probeAnchor.position + " " + probeAnchor.forward);
             }
 
-            UnityEngine.Vector2[] uvs = mesh.uv;
-            if (uvs.Length == 0)
-            {
-                uvs = mesh.uv2;
-                if (uvs.Length == 0)
-                {
-                    uvs = mesh.uv3;
-                    if (uvs.Length == 0)
-                    {
-                        uvs = mesh.uv4;
-                    }
-                }
+            Il2CppSystem.Collections.Generic.List<UnityEngine.Vector2> uvs = new();
+			for(int j = 0;j < 8; j++)
+			{
+				mesh.GetUVs(j, uvs);
+				if (uvs != null && uvs.Count > 0)
+				{
+					break;
+				}
+
+			}
+			if (uvs == null || uvs.Count == 0)
+			{
+                Console.WriteLine("No uv map, ignore");
+				continue;
             }
+
             int horizontalBlockCount = 1;
             int verticalBlockCount = 1;
             int xOffset;
             int yOffset;
             int layer = smr.gameObject.layer;// Do not forget to drawmesh in this layer
-            UnityEngine.Vector3[] verts = new UnityEngine.Vector3[uvs.Length];
+            UnityEngine.Vector3[] verts = new UnityEngine.Vector3[uvs.Count];
             // Transform mesh into a surface according to its uv
             float minX = float.PositiveInfinity;
             float minY = float.PositiveInfinity;
             float maxX = float.NegativeInfinity;
             float maxY = float.NegativeInfinity;
-            for (int j = 0; j < uvs.Length; j++)
+            for (int j = 0; j < uvs.Count; j++)
             {
                 verts[j] = new UnityEngine.Vector3(-uvs[j].x, uvs[j].y, 0f);
                 minX = Mathf.Min(minX, uvs[j].x);
@@ -514,7 +508,7 @@ internal class PmxBuilder
 
             for (int j = 0; j < Math.Min(smr.sharedMaterials.Length, subMeshCount); j++)
             {
-                if (meshRenders[i].sharedMaterials[j] == null || meshRenders[i].sharedMaterials[j].shader.name == "LIF/lif_main_hair_outline") continue;
+                if (meshRenders[i].sharedMaterials[j] == null || ignoredShaders.Contains(meshRenders[i].sharedMaterials[j].shader.name)) continue;
                 Material material = new Material(meshRenders[i].sharedMaterials[j]);
 
                 string matName = smrMaterialsCache[GetGameObjectPath(smr.gameObject)][j];
@@ -536,6 +530,10 @@ internal class PmxBuilder
                     if (mainTex != null)
                     {
                         int baseLength = Math.Max(mainTex.width, mainTex.height);
+						if (baseLength <= 0)
+						{
+							baseLength = 1024;
+						}
                         texturewidth = baseLength * horizontalBlockCount;
                         textureheight = baseLength * verticalBlockCount;
                     }
@@ -698,8 +696,10 @@ internal class PmxBuilder
                 Mesh.Destroy(mesh);
             }
         }
-        GameObject.Find("BodyTop").transform.Translate(new UnityEngine.Vector3(0, -10, 0));
-        void uvIslandSolver(int[] triangles, UnityEngine.Vector3[] vertices)
+        
+		GameObject.Find("BodyTop").transform.Translate(new UnityEngine.Vector3(0, -10, 0));
+        
+		void uvIslandSolver(int[] triangles, UnityEngine.Vector3[] vertices)
         {
             int[] parent = new int[vertices.Length];
             float[] minX = new float[vertices.Length];
@@ -803,10 +803,18 @@ internal class PmxBuilder
     public void ChangeAnimations()
 	{
 		Human human = SVSExporterPlugin.selectedChara;
-		human.face.ChangeEyesBlinkFlag(false);
-		human.face.ChangeEyesShaking(false);
-		human.face.ChangeLookEyesTarget(1, null, 0f);
-		human.face.ChangeEyesPtn(0);
+		HumanFace face = human.face;
+		face.human.face.ChangeEyesBlinkFlag(false);
+		face.ChangeEyesShaking(false);
+		face.ChangeLookEyesTarget(1, null, 0f);
+		face.ChangeEyesPtn(1, false);
+		face.ChangeEyesPtn(0, false);
+		face.ChangeMouthPtn(1, false);
+		face.ChangeMouthPtn(0, false);
+		face.ChangeEyebrowPtn(1, false);
+		face.ChangeEyebrowPtn(0, false);
+		face.ChangeEyesOpenMax(1);
+		face.ChangeMouthOpenMax(0);
 		
 		human.body.animBody.speed = 0f;
 
@@ -841,9 +849,9 @@ internal class PmxBuilder
 			BoneBackupData = boneBackupData
 		};
 		vertexCount = 0;
-		vertics_num = new int[0];
-		vertics_name = new string[0];
-	}
+		vertexCountRecord.Clear();
+
+    }
 
 	public void CreateModelInfo()
 	{
@@ -906,77 +914,49 @@ internal class PmxBuilder
 		}
 	}
 
-	private void SetSkinnedMeshList()
-	{
-		int num = GameObject.Find("BodyTop").transform.GetComponentsInChildren<SkinnedMeshRenderer>(includeInactive: true).Length;
-		vertics_num = new int[num];
-		vertics_name = new string[num];
-		msg += "\n";
-	}
-
 	public void CreateMeshList()
 	{
 		//string[] source = new string[0];
-		string[] source2 = new string[7] { "cf_O_namida_L", "cf_O_namida_M", "cf_O_namida_S", "cf_O_gag_eye_00", "cf_O_gag_eye_01", "cf_O_gag_eye_02", "o_tang" };
+		//string[] source2 = new string[] { "cf_O_namida_L", "cf_O_namida_M", "cf_O_namida_S", "cf_O_gag_eye_00", "o_tang" };
 		string[] source3 = new string[8] { "o_mnpa", "o_mnpb", "n_tang", "n_tang_silhouette", "o_dankon", "o_gomu", "o_dan_f", "cf_O_canine" };
-		string[] source4 = new string[23]
-		{
-			"o_hit_armL", "o_hit_armR", "o_hit_footL", "o_hit_footR", "o_hit_handL", "o_hit_handR", "o_hit_hara", "o_hit_haraB", "o_hit_haraUnder", "o_hit_kneeBL",
-			"o_hit_kneeBR", "o_hit_kneeL", "o_hit_kneeR", "o_hit_kokan", "o_hit_legBL", "o_hit_legBR", "o_hit_legL", "o_hit_legR", "o_hit_mune", "o_hit_muneB",
-			"o_hit_siriL", "o_hit_siriR", "cf_O_face_atari"
-		};
-		SkinnedMeshRenderer[] componentsInChildren = GameObject.Find("BodyTop").transform.GetComponentsInChildren<SkinnedMeshRenderer>();
+		//string[] source4 = new string[23]
+		//{
+		//	"o_hit_armL", "o_hit_armR", "o_hit_footL", "o_hit_footR", "o_hit_handL", "o_hit_handR", "o_hit_hara", "o_hit_haraB", "o_hit_haraUnder", "o_hit_kneeBL",
+		//	"o_hit_kneeBR", "o_hit_kneeL", "o_hit_kneeR", "o_hit_kokan", "o_hit_legBL", "o_hit_legBR", "o_hit_legL", "o_hit_legR", "o_hit_mune", "o_hit_muneB",
+		//	"o_hit_siriL", "o_hit_siriR", "cf_O_face_atari"
+		//};
+		SkinnedMeshRenderer[] componentsInChildren = GameObject.Find("BodyTop").transform.GetComponentsInChildren<SkinnedMeshRenderer>(includeInactive:true);
+		int total = 0;
 		for (int i = 0; i < componentsInChildren.Length; i++)
 		{
 			if (
-				(
-					(!componentsInChildren[i].enabled || !componentsInChildren[i].isVisible)
-					&&
-					(!componentsInChildren[i].enabled || !source2.Contains(componentsInChildren[i].name, StringComparer.Ordinal))
-					//&& 
-					//(!exportAll || !componentsInChildren[i].enabled || source3.Contains(componentsInChildren[i].name, StringComparer.Ordinal))
-					//&& 
-					//(!exportHitBoxes || !componentsInChildren[i].enabled || !source4.Contains(componentsInChildren[i].name, StringComparer.Ordinal) || nowCoordinate != maxCoord)
-				)
-				|| 
-				(
-					nowCoordinate < maxCoord 
-					&& 
-					ignoreList.Contains(componentsInChildren[i].name, StringComparer.Ordinal) 
-					&& 
-					componentsInChildren[i].sharedMaterials.Length > 0 
-					//&& 
-					//ignoreList.Contains(CleanUpName(componentsInChildren[i].sharedMaterial.name), StringComparer.Ordinal)
-				)
-				|| 
+                (
+                    nowCoordinate < maxCoord
+                    &&
+                    (
+						(!componentsInChildren[i].enabled || !componentsInChildren[i].isVisible)
+						||
+						ignoreList.Contains(componentsInChildren[i].name, StringComparer.Ordinal)
+						||
+						componentsInChildren[i].sharedMaterials.Length == 0
+					)
+                )
+                || 
 				(
 					nowCoordinate == maxCoord 
-					&& 
-					(
-						!ignoreList.Contains(componentsInChildren[i].name, StringComparer.Ordinal)
-						//||
-						//(
-						//	ignoreList.Contains(componentsInChildren[i].name, StringComparer.Ordinal) 
-						//	&& 
-						//	componentsInChildren[i].sharedMaterials.Length > 0 
-						//	//&& 
-						//	//!ignoreList.Contains(CleanUpName(componentsInChildren[i].sharedMaterial.name), StringComparer.Ordinal)
-						//)
-					)
-				)
-			)
+					&&
+                    !ignoreList.Contains(componentsInChildren[i].name, StringComparer.Ordinal)
+                )
+				||
+                source3.Contains(componentsInChildren[i].name, StringComparer.Ordinal)
+
+            )
 			{
 				continue;
 			}
 			
 			meshRenders.Add(componentsInChildren[i]);
             Console.WriteLine("Exporting: " + componentsInChildren[i].name);
-			//if (componentsInChildren[i].sharedMaterials.Count() == 0)
-			//{
-			//	Material material = new Material(Shader.Find("Diffuse"));
-			//	material.name = componentsInChildren[i].name + "_M";
-			//	componentsInChildren[i].material = material;
-			//}
 			SMRData sMRData = new SMRData(this, componentsInChildren[i]);
 			AddToSMRDataList(sMRData);
 			smrMaterialsCache.Add(sMRData.SMRPath, sMRData.SMRMaterialNames);
@@ -994,8 +974,10 @@ internal class PmxBuilder
 			Mesh mesh = new Mesh();
             componentsInChildren[i].BakeMesh(mesh);
 
-            vertics_num[i] = mesh.vertices.Length;
-			vertics_name[i] = componentsInChildren[i].sharedMaterial.name;
+			if (nowCoordinate == maxCoord)
+			{
+				vertexCountRecord.Add(componentsInChildren[i].name + componentsInChildren[i].sharedMaterial.name, total + mesh.vertexCount);
+            }
 			//_ = componentsInChildren[i].gameObject;
 			BoneWeight[] boneWeights = componentsInChildren[i].sharedMesh.boneWeights;
 			Transform transform = componentsInChildren[i].gameObject.transform;
@@ -1135,151 +1117,198 @@ internal class PmxBuilder
 	private void CreateMorph()
 	{
         Human human = SVSExporterPlugin.selectedChara;
-        var fBSTarget = human.face.eyesCtrl.FBSTarget;
-		for (int i = 0; i < fBSTarget.Length; i++)
+        Dictionary<string, Mesh> meshes = new();
+
+        var fs = new Il2CppSystem.IO.FileStream("abdata/chara/head/head_02.unity3d", Il2CppSystem.IO.FileMode.Open, Il2CppSystem.IO.FileAccess.Read);
+        var bundle = AssetBundle.LoadFromStream(fs);
+
+        foreach (var i in bundle.LoadAllAssets())
+        {
+            if (i.name == "p_cf_sv_head_01_low")
+            {
+                GameObject ga = i.TryCast<GameObject>();
+                var instance = UnityEngine.Object.Instantiate(ga);
+				instance.name = "Morph info carrier";
+                foreach (var j in instance.GetComponentsInChildren<SkinnedMeshRenderer>())
+                {
+                    meshes.Add(j.sharedMesh.name, j.sharedMesh);
+                }
+				break;
+            }
+        }
+        bundle.Unload(false);
+        fs.Close();
+
+		if (meshes.Count == 0)
 		{
-			SkinnedMeshRenderer skinnedMeshRenderer = fBSTarget[i].GetSkinnedMeshRenderer();
-			string name = skinnedMeshRenderer.sharedMaterial.name;
-			int blendShapeCount = skinnedMeshRenderer.sharedMesh.blendShapeCount;
-			UnityEngine.Vector3[] array = new UnityEngine.Vector3[skinnedMeshRenderer.sharedMesh.vertices.Length];
-			UnityEngine.Vector3[] deltaNormals = new UnityEngine.Vector3[skinnedMeshRenderer.sharedMesh.normals.Length];
-			UnityEngine.Vector3[] deltaTangents = new UnityEngine.Vector3[skinnedMeshRenderer.sharedMesh.tangents.Length];
-			int num = 0;
-			for (int j = 0; j < vertics_num.Length && (vertics_num[j] != array.Length || vertics_name[j] != name); j++)
-			{
-				num += vertics_num[j];
-			}
-			if (num >= pmxFile.VertexList.Count)
+			Console.WriteLine("Load from assetbundle failed.Bundle: " + "abdata/chara/head/head_02.unity3d");
+			return;
+		}
+
+        //Eye
+        var fBSTarget = human.face.eyesCtrl.FBSTarget;
+		
+
+		for(int i = 0;i < fBSTarget.Length; i++)
+		{
+			var smr = fBSTarget[i].GetSkinnedMeshRenderer();
+			Mesh mesh = meshes[CleanUpName(smr.sharedMesh.name)];
+
+			if (!vertexCountRecord.TryGetValue(smr.name + smr.sharedMaterial.name, out int num))
 			{
 				continue;
 			}
-			for (int k = 0; k < blendShapeCount; k++)
+
+            UnityEngine.Vector3[] array = new UnityEngine.Vector3[mesh.vertices.Length];
+            UnityEngine.Vector3[] deltaNormals = new UnityEngine.Vector3[mesh.normals.Length];
+            UnityEngine.Vector3[] deltaTangents = new UnityEngine.Vector3[mesh.tangents.Length];
+
+            for (int j = 0; j < mesh.blendShapeCount; j++)
 			{
-				skinnedMeshRenderer.sharedMesh.GetBlendShapeFrameVertices(k, 0, array, deltaNormals, deltaTangents);
-				PmxMorph pmxMorph = new PmxMorph
+
+				var morphName = mesh.GetBlendShapeName(j);
+				bool flag = false;
+				for (int k = 0; k < pmxFile.MorphList.Count; k++)
 				{
-					Name = skinnedMeshRenderer.sharedMesh.GetBlendShapeName(k),
-					NameE = "",
-					Panel = 1,
-					Kind = PmxMorph.OffsetKind.Vertex
-				};
-				for (int l = 0; l < array.Length; l++)
-				{
-					PmxVertexMorph pmxVertexMorph = new PmxVertexMorph(num + l, new PmxLib.Vector3(0f - array[l].x, array[l].y, 0f - array[l].z));
-					pmxVertexMorph.Offset *= (float)scale;
-					pmxMorph.OffsetList.Add(pmxVertexMorph);
-				}
-				bool flag = true;
-				for (int m = 0; m < pmxFile.MorphList.Count; m++)
-				{
-					if (pmxFile.MorphList[m].Name.Equals(pmxMorph.Name))
+                    if (pmxFile.MorphList[k].Name.Equals(morphName))
 					{
-						flag = false;
+						flag = true;
+						break;
 					}
 				}
 				if (flag)
 				{
-					pmxFile.MorphList.Add(pmxMorph);
+					continue;
 				}
-			}
-		}
-		fBSTarget = human.face.mouthCtrl.FBSTarget;
-		for (int i = 0; i < fBSTarget.Length; i++)
-		{
-			SkinnedMeshRenderer skinnedMeshRenderer2 = fBSTarget[i].GetSkinnedMeshRenderer();
-			string name2 = skinnedMeshRenderer2.sharedMaterial.name;
-			int blendShapeCount2 = skinnedMeshRenderer2.sharedMesh.blendShapeCount;
-			UnityEngine.Vector3[] array2 = new UnityEngine.Vector3[skinnedMeshRenderer2.sharedMesh.vertices.Length];
-			UnityEngine.Vector3[] deltaNormals2 = new UnityEngine.Vector3[skinnedMeshRenderer2.sharedMesh.normals.Length];
-			UnityEngine.Vector3[] deltaTangents2 = new UnityEngine.Vector3[skinnedMeshRenderer2.sharedMesh.tangents.Length];
-			int num2 = 0;
-			for (int n = 0; n < vertics_num.Length && (vertics_num[n] != array2.Length || vertics_name[n] != name2); n++)
-			{
-				num2 += vertics_num[n];
-			}
-			if (num2 >= pmxFile.VertexList.Count)
-			{
-				continue;
-			}
-			for (int num3 = 0; num3 < blendShapeCount2; num3++)
-			{
-				skinnedMeshRenderer2.sharedMesh.GetBlendShapeFrameVertices(num3, 0, array2, deltaNormals2, deltaTangents2);
-				PmxMorph pmxMorph2 = new PmxMorph
+
+                PmxMorph pmxMorph = new PmxMorph
 				{
-					Name = skinnedMeshRenderer2.sharedMesh.GetBlendShapeName(num3),
+					Name = morphName,
 					NameE = "",
 					Panel = 1,
 					Kind = PmxMorph.OffsetKind.Vertex
 				};
-				for (int num4 = 0; num4 < array2.Length; num4++)
+
+				mesh.GetBlendShapeFrameVertices(j, 0, array, deltaNormals, deltaTangents);
+				for(int k = 0;k < array.Length; k++)
 				{
-					PmxVertexMorph pmxVertexMorph2 = new PmxVertexMorph(num2 + num4, new PmxLib.Vector3(0f - array2[num4].x, array2[num4].y, 0f - array2[num4].z));
-					pmxVertexMorph2.Offset *= (float)scale;
-					pmxMorph2.OffsetList.Add(pmxVertexMorph2);
-				}
-				bool flag2 = true;
-				for (int num5 = 0; num5 < pmxFile.MorphList.Count; num5++)
-				{
-					if (pmxFile.MorphList[num5].Name.Equals(pmxMorph2.Name))
-					{
-						flag2 = false;
-					}
-				}
-				if (flag2)
-				{
-					pmxFile.MorphList.Add(pmxMorph2);
-				}
+					PmxVertexMorph pmxVertexMorph = new PmxVertexMorph(num + k, new PmxLib.Vector3(0f - array[k].x, array[k].y, 0f - array[k].z));
+                    pmxMorph.OffsetList.Add(pmxVertexMorph);
+
+                }
+				pmxFile.MorphList.Add(pmxMorph);
 			}
-		}
-		fBSTarget = human.face.eyebrowCtrl.FBSTarget;
-		for (int i = 0; i < fBSTarget.Length; i++)
-		{
-			SkinnedMeshRenderer skinnedMeshRenderer3 = fBSTarget[i].GetSkinnedMeshRenderer();
-			string name3 = skinnedMeshRenderer3.sharedMaterial.name;
-			int blendShapeCount3 = skinnedMeshRenderer3.sharedMesh.blendShapeCount;
-			UnityEngine.Vector3[] array3 = new UnityEngine.Vector3[skinnedMeshRenderer3.sharedMesh.vertices.Length];
-			UnityEngine.Vector3[] deltaNormals3 = new UnityEngine.Vector3[skinnedMeshRenderer3.sharedMesh.normals.Length];
-			UnityEngine.Vector3[] deltaTangents3 = new UnityEngine.Vector3[skinnedMeshRenderer3.sharedMesh.tangents.Length];
-			int num6 = 0;
-			for (int num7 = 0; num7 < vertics_num.Length && (vertics_num[num7] != array3.Length || vertics_name[num7] != name3); num7++)
-			{
-				num6 += vertics_num[num7];
-			}
-			if (num6 >= pmxFile.VertexList.Count)
-			{
-				continue;
-			}
-			for (int num8 = 0; num8 < blendShapeCount3; num8++)
-			{
-				skinnedMeshRenderer3.sharedMesh.GetBlendShapeFrameVertices(num8, 0, array3, deltaNormals3, deltaTangents3);
-				PmxMorph pmxMorph3 = new PmxMorph
-				{
-					Name = skinnedMeshRenderer3.sharedMesh.GetBlendShapeName(num8),
-					NameE = "",
-					Panel = 1,
-					Kind = PmxMorph.OffsetKind.Vertex
-				};
-				for (int num9 = 0; num9 < array3.Length; num9++)
-				{
-					PmxVertexMorph pmxVertexMorph3 = new PmxVertexMorph(num6 + num9, new PmxLib.Vector3(0f - array3[num9].x, array3[num9].y, 0f - array3[num9].z));
-					pmxVertexMorph3.Offset *= (float)scale;
-					pmxMorph3.OffsetList.Add(pmxVertexMorph3);
-				}
-				bool flag3 = true;
-				for (int num10 = 0; num10 < pmxFile.MorphList.Count; num10++)
-				{
-					if (pmxFile.MorphList[num10].Name.Equals(pmxMorph3.Name))
-					{
-						flag3 = false;
-					}
-				}
-				if (flag3)
-				{
-					pmxFile.MorphList.Add(pmxMorph3);
-				}
-			}
-		}
-	}
+        }
+
+        // Mouth
+        fBSTarget = human.face.mouthCtrl.FBSTarget;
+
+        for (int i = 0; i < fBSTarget.Length; i++)
+        {
+            var smr = fBSTarget[i].GetSkinnedMeshRenderer();
+            Mesh mesh = meshes[CleanUpName(smr.sharedMesh.name)];
+
+            if (!vertexCountRecord.TryGetValue(smr.name + smr.sharedMaterial.name, out int num))
+            {
+                continue;
+            }
+
+            UnityEngine.Vector3[] array = new UnityEngine.Vector3[mesh.vertices.Length];
+            UnityEngine.Vector3[] deltaNormals = new UnityEngine.Vector3[mesh.normals.Length];
+            UnityEngine.Vector3[] deltaTangents = new UnityEngine.Vector3[mesh.tangents.Length];
+
+            for (int j = 0; j < mesh.blendShapeCount; j++)
+            {
+
+                var morphName = mesh.GetBlendShapeName(j);
+                bool flag = false;
+                for (int k = 0; k < pmxFile.MorphList.Count; k++)
+                {
+                    if (pmxFile.MorphList[k].Name.Equals(morphName))
+                    {
+                        flag = true;
+                        break;
+                    }
+                }
+                if (flag)
+                {
+                    continue;
+                }
+
+                PmxMorph pmxMorph = new PmxMorph
+                {
+                    Name = morphName,
+                    NameE = "",
+                    Panel = 1,
+                    Kind = PmxMorph.OffsetKind.Vertex
+                };
+
+                mesh.GetBlendShapeFrameVertices(j, 0, array, deltaNormals, deltaTangents);
+                for (int k = 0; k < array.Length; k++)
+                {
+                    PmxVertexMorph pmxVertexMorph = new PmxVertexMorph(num + k, new PmxLib.Vector3(0f - array[k].x, array[k].y, 0f - array[k].z));
+                    pmxMorph.OffsetList.Add(pmxVertexMorph);
+                }
+                pmxFile.MorphList.Add(pmxMorph);
+            }
+        }
+
+
+        // Mouth
+        fBSTarget = human.face.eyebrowCtrl.FBSTarget;
+
+        for (int i = 0; i < fBSTarget.Length; i++)
+        {
+            var smr = fBSTarget[i].GetSkinnedMeshRenderer();
+            Mesh mesh = meshes[CleanUpName(smr.sharedMesh.name)];
+
+            if (!vertexCountRecord.TryGetValue(smr.name + smr.sharedMaterial.name, out int num))
+            {
+                continue;
+            }
+
+            UnityEngine.Vector3[] array = new UnityEngine.Vector3[mesh.vertices.Length];
+            UnityEngine.Vector3[] deltaNormals = new UnityEngine.Vector3[mesh.normals.Length];
+            UnityEngine.Vector3[] deltaTangents = new UnityEngine.Vector3[mesh.tangents.Length];
+
+            for (int j = 0; j < mesh.blendShapeCount; j++)
+            {
+
+                var morphName = mesh.GetBlendShapeName(j);
+                bool flag = false;
+                for (int k = 0; k < pmxFile.MorphList.Count; k++)
+                {
+                    if (pmxFile.MorphList[k].Name.Equals(morphName))
+                    {
+                        flag = true;
+                        break;
+                    }
+                }
+                if (flag)
+                {
+                    continue;
+                }
+
+                PmxMorph pmxMorph = new PmxMorph
+                {
+                    Name = morphName,
+                    NameE = "",
+                    Panel = 1,
+                    Kind = PmxMorph.OffsetKind.Vertex
+                };
+
+                mesh.GetBlendShapeFrameVertices(j, 0, array, deltaNormals, deltaTangents);
+                for (int k = 0; k < array.Length; k++)
+                {
+                    PmxVertexMorph pmxVertexMorph = new PmxVertexMorph(num + k, new PmxLib.Vector3(0f - array[k].x, array[k].y, 0f - array[k].z));
+                    pmxMorph.OffsetList.Add(pmxVertexMorph);
+                }
+                pmxFile.MorphList.Add(pmxMorph);
+            }
+        }
+
+		GameObject.Destroy(GameObject.Find("Morph info carrier"));
+    }
 
 	public void CreateMaterial(Material material, string matName, int count)
 	{
@@ -1289,65 +1318,9 @@ internal class PmxBuilder
 			NameE = matName,
 			Flags = (PmxMaterial.MaterialFlags.DrawBoth | PmxMaterial.MaterialFlags.Shadow | PmxMaterial.MaterialFlags.SelfShadowMap | PmxMaterial.MaterialFlags.SelfShadow)
 		};
-		//if (material.mainTexture != null)
-		//{
-		//	string text = matName + "_MT_CT.png";
-		//	WriteToTexture2D(material, "_MT_CT", savePath + text, material.mainTexture);
-		//}
-		//SaveTexture(material, matName, "_MT");
-		//SaveTexture(material, matName, "_AM");
-		//SaveTexture(material, matName, "_CM");
-		//SaveTexture(material, matName, "_DM");
-		//SaveTexture(material, matName, "_LM");
-		//SaveTexture(material, matName, "_NM");
-		//SaveTexture(material, matName, "_NMP");
-		//SaveTexture(material, matName, "_NMPD");
-		//SaveTexture(material, matName, "_ot1");
-		//SaveTexture(material, matName, "_ot2");
-		//SaveTexture(material, matName, "_ot3");
-		//SaveTexture(material, matName, "_lqdm");
-		//SaveTexture(material, matName, "_HGLS");
-		//SaveTexture(material, matName, "_T2");
-		//SaveTexture(material, matName, "_T3");
-		//SaveTexture(material, matName, "_AR");
-		//SaveTexture(material, matName, "_GLSR");
-		//MaterialData matData = new MaterialData(material, matName);
-		//AddToMaterialDataList(matData);
-		//if (material.HasProperty("_Color"))
-		//{
-		//	pmxMaterial.Diffuse = material.GetColor("_Color");
-		//}
-		//if (material.HasProperty("_AmbColor"))
-		//{
-		//	pmxMaterial.Ambient = material.GetColor("_AmbColor");
-		//}
-		//if (material.HasProperty("_Opacity"))
-		//{
-		//	pmxMaterial.Diffuse.a = material.GetFloat("_Opacity");
-		//}
-		//if (material.HasProperty("_SpecularColor"))
-		//{
-		//	pmxMaterial.Specular = material.GetColor("_SpecularColor");
-		//}
-		//if (!material.HasProperty("_Shininess") && material.HasProperty("_OutlineColor"))
-		//{
-		//	pmxMaterial.EdgeSize = material.GetFloat("_OutlineWidth");
-		//	pmxMaterial.EdgeColor = material.GetColor("_OutlineColor");
-		//}
 		pmxMaterial.FaceCount = count;
 		pmxFile.MaterialList.Add(pmxMaterial);
 	}
-
-	//public void SaveTexture(Material material, string matName, string type)
-	//{
-	//	string text = typeMap[type];
-	//	if (material.HasProperty(text) && material.GetTexture(text) != null)
-	//	{
-	//		string text2 = matName + type + ((type == "_MT") ? "_CT" : "") + ".png";
-	//		Texture texture = material.GetTexture(text);
-	//		TextureSaver.SaveTexture(texture, currentSavePath + "/" + text2);
-	//	}
-	//}
 
 	private void AddFaceList(int[] faceList, int count)
 	{
@@ -1374,8 +1347,8 @@ internal class PmxBuilder
 					nowCoordinate < maxCoord 
 					&& 
 					ignoreList.Contains(meshRenderer.name, StringComparer.Ordinal) 
-					&& 
-					meshRenderer.sharedMaterials.Length > 0 
+					//&& 
+					//meshRenderer.sharedMaterials.Length > 0 
 					//&& 
 					//ignoreList.Contains(CleanUpName(meshRenderer.sharedMaterial.name), StringComparer.Ordinal)
 				) 
@@ -1384,8 +1357,8 @@ internal class PmxBuilder
 					nowCoordinate == maxCoord 
 					&& 
 					!ignoreList.Contains(meshRenderer.name, StringComparer.Ordinal) 
-					&& 
-					meshRenderer.sharedMaterials.Length > 0 
+					//&& 
+					//meshRenderer.sharedMaterials.Length > 0 
 					//&& 
 					//!ignoreList.Contains(CleanUpName(meshRenderer.sharedMaterial.name), StringComparer.Ordinal)
 				)
@@ -1778,38 +1751,53 @@ internal class PmxBuilder
 
 	public void ExportGagEyes()
 	{
-		Human human = SVSExporterPlugin.selectedChara;
-		string assetBundleName = "chara/mt_eye_00.unity3d";
-		List<GagData> list = new List<GagData>
+		string[] names = new string[]
 		{
-			new GagData("cf_t_gageye_00", 1),
-			new GagData("cf_t_gageye_01", 2),
-			new GagData("cf_t_gageye_02", 1),
-			new GagData("cf_t_gageye_03", 2),
-			new GagData("cf_t_gageye_04", 1),
-			new GagData("cf_t_gageye_05", 1),
-			new GagData("cf_t_gageye_06", 1),
-			new GagData("cf_t_gageye_07", 3),
-			new GagData("cf_t_gageye_08", 3),
-			new GagData("cf_t_gageye_09", 3),
-			new GagData("cf_t_gageye_10", 3),
-			new GagData("cf_t_expression_00", 0),
-			new GagData("cf_t_expression_01", 0)
-		};
-		for (int i = 0; i < list.Count; i++)
+            "cf_t_gageye_00", "cf_t_gageye_01", "cf_t_gageye_02", "cf_t_gageye_03", "cf_t_gageye_04", "cf_t_gageye_05",
+            "cf_t_gageye_06", "cf_t_gageye_07", "cf_t_gageye_08", "cf_t_gageye_09", "cf_t_gageye_10",
+            "cf_t_expression_00", "cf_t_expression_01"
+        };
+		var loadedBundles = AssetBundle.GetAllLoadedAssetBundles().ToList();
+		foreach (var bundle in loadedBundles)
 		{
-			Texture texture = CommonLib.LoadAsset<Texture2D>(assetBundleName, list[i].MainTex, clone: false, string.Empty);
-			int num = list[i].EyeObjNo - 1;
-			Material material = ((num >= 0) ? human.face.matGag[list[i].EyeObjNo - 1] : human.face.eyeLookMatCtrl[0].material);
-			string text = ((num >= 0) ? "_MT" : "_EXPR");
-			//string prop = typeMap[text];
-			string text2 = CleanUpName(material.name) + "_" + list[i].MainTex;
-			if (texture != null)
+			if (bundle.name.Contains("mt_eye_000_00"))
 			{
-				TextureSaver.SaveTexture(texture, currentSavePath + text2 + text + ((num >= 0) ? "_CT" : "") + ".png");
-			}
+				foreach (var i in bundle.LoadAllAssets())
+				{
+					if (names.Contains(i.name))
+					{
+						Texture2D texture = i.TryCast<Texture2D>();
+						TextureSaver.SaveTexture(texture, savePath + i.name + ".png");
+						Texture2D.Destroy(texture);
+					}
+					UnityEngine.Object.Destroy(i);
+				}
+            }
 		}
-	}
+        //foreach (var loadedBundle in loadedBundles)
+        //{
+        //    if (loadedBundle.name.Contains("mt_eye_000_00"))
+        //    {
+        //        // Use the already loaded bundle
+        //        bundle = loadedBundle;
+        //        return;
+        //    }
+        //}
+        //      var fs = new Il2CppSystem.IO.FileStream("abdata/chara/mt_eye_000_00.unity3d", Il2CppSystem.IO.FileMode.Open, Il2CppSystem.IO.FileAccess.Read);
+        //      var bundle = AssetBundle.LoadFromStream(fs);
+
+        //      foreach (var i in bundle.LoadAllAssets())
+        //      {
+        //	if (names.Contains(i.name))
+        //	{
+        //		Texture2D texture = i.TryCast<Texture2D>();
+        //		TextureSaver.SaveTexture(texture, savePath +  i.name + ".png");
+        //		Texture2D.Destroy(texture);
+        //	}
+        //      }
+        //bundle.Unload(false);
+        //      fs.Close();
+    }
 
 	//public void GetCreateBodyMaterials()
 	//{
@@ -2077,45 +2065,10 @@ internal class PmxBuilder
         Human human = SVSExporterPlugin.selectedChara;
         StateMiniSelection stateMiniSelection = GameObject.Find("Cvs_StateMiniWindow").GetComponent<StateMiniSelection>();
         var face = human.face;
-		//var fileFace = human.fileFace;
-		//var fileBody = human.fileBody;
 		var eyes = face.eyesCtrl;
-		//BindingFlags bindingAttr = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 		var eyeMatControllerl = face.eyeLookMatCtrl[0]._eyeLR == ILLGames.Unity.Animations.EYE_LR.EYE_L ? face.eyeLookMatCtrl[0] : face.eyeLookMatCtrl[1];
 		var eyeMatControllerr = face.eyeLookMatCtrl[0]._eyeLR == ILLGames.Unity.Animations.EYE_LR.EYE_R ? face.eyeLookMatCtrl[0] : face.eyeLookMatCtrl[1];
 
-		//List<string> list = (from field in fileFace.GetType().GetFields(bindingAttr)
-		//					 select field.Name).ToList();
-		//List<object> list2 = (from field in fileFace.GetType().GetFields(bindingAttr)
-		//					  select field.GetValue(fileFace)).ToList();
-		//for (int i = 0; i < list.Count; i++)
-		//{
-		//	string value = ((list2[i] != null) ? list2[i].ToString() : "");
-		//	ChaFileData item = new ChaFileData(list[i].ToString(), value);
-		//	chaFileCustomFaceData.Add(item);
-		//}
-
-		//List<string> list3 = (from field in fileBody.GetType().GetFields(bindingAttr)
-		//					  select field.Name).ToList();
-		//List<object> list4 = (from field in fileBody.GetType().GetFields(bindingAttr)
-		//					  select field.GetValue(fileBody)).ToList();
-		//for (int j = 0; j < list3.Count; j++)
-		//{
-		//	string value2 = ((list4[j] != null) ? list4[j].ToString() : "");
-		//	ChaFileData item2 = new ChaFileData(list3[j].ToString(), value2);
-		//	chaFileCustomBodyData.Add(item2);
-		//}
-		//ChaFileHair fileHair = characterControl.fileHair;
-		//List<string> list5 = (from field in fileHair.GetType().GetFields(bindingAttr)
-		//					  select field.Name).ToList();
-		//List<object> list6 = (from field in fileHair.GetType().GetFields(bindingAttr)
-		//					  select field.GetValue(fileHair)).ToList();
-		//for (int k = 0; k < list5.Count; k++)
-		//{
-		//	string value3 = ((list6[k] != null) ? list6[k].ToString() : "");
-		//	ChaFileData item3 = new ChaFileData(list5[k].ToString(), value3);
-		//	chaFileCustomHairData.Add(item3);
-		//}
 		CharacterInfoData item4 = new CharacterInfoData
 		{
 			Personality = human.fileParam.personality,
@@ -2133,11 +2086,6 @@ internal class PmxBuilder
 
         List<BlendShapeinfo> blendShapeinfos = new();
 
-        int orPtn = face.GetEyesPtn();
-        bool orSha = face.GetEyesShaking();
-        bool orBli = face.GetEyesShaking();
-        float orOpr = eyes._openRate;
-		float orOpm = face.GetEyesOpenMax();
         var _ = Human.lstCtrl.GetCategoryInfo(ChaListDefine.CategoryNo.cha_eyeset);
 		List<string> ptnNames = new();
 
@@ -2146,12 +2094,10 @@ internal class PmxBuilder
 			ptnNames.Add(name.Name);
 		}
 		
-
         face.ChangeEyesOpenMax(1);
         face.ChangeEyesShaking(false);
         face.ChangeEyesBlinkFlag(false);
         face.ChangeEyesPtn(1, false);
-
 
         for (int j = 0; j < ptnNames.Count; j++)
         {
@@ -2174,17 +2120,7 @@ internal class PmxBuilder
                 }
             }
         }
-
-        face.ChangeEyesPtn(orPtn);
-        face.ChangeEyesShaking(orSha);
-        face.ChangeEyesBlinkFlag(orBli);
-        face.eyesCtrl.SetOpenRateForce(orOpr);
-        face.ChangeEyesOpenMax(orOpm);
-
-        //stateMiniSelection._expPack._sldEyeOpenMax.value = 1;
-        //stateMiniSelection._expPack._sldMouthOpenMax.Refresh();
-        face.fbsCtrl.OnLateUpdate(0);
-        face.eyesCtrl.CalculateBlendShape(0);
+        face.ChangeEyesPtn(0, false);
 
         UnityEngine.Vector2 _vecl = eyeMatControllerl.material.GetTextureOffset("_Pipil_texture");
 		UnityEngine.Vector2 _vecr = eyeMatControllerr.material.GetTextureOffset("_Pipil_texture");
