@@ -1022,7 +1022,7 @@ internal class PmxBuilder
 
 			if (nowCoordinate == maxCoord)
 			{
-				vertexCountRecord.Add(componentsInChildren[i].name + componentsInChildren[i].sharedMaterial.name, total + mesh.vertexCount);
+				vertexCountRecord.Add(componentsInChildren[i].name + componentsInChildren[i].sharedMaterial.name, total);
 				total += mesh.vertexCount;
             }
 			//_ = componentsInChildren[i].gameObject;
