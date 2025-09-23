@@ -15,7 +15,6 @@ using System.Text;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.Rendering;
-
 internal class PmxBuilder
 {
 
@@ -156,18 +155,65 @@ internal class PmxBuilder
 	public static void test()
 	{
         Human human = SVSExporterPlugin.selectedChara;
+        Dictionary<string, Mesh> meshes = new();
 
-        Renderer[] componentsInChildren = human.face.objHead.GetComponentsInChildren<Renderer>(includeInactive: true);
-        foreach (Renderer renderer in componentsInChildren)
+        var fs = new Il2CppSystem.IO.FileStream("abdata/chara/head/head_02.unity3d", Il2CppSystem.IO.FileMode.Open, Il2CppSystem.IO.FileAccess.Read);
+        var bundle = AssetBundle.LoadFromStream(fs);
+
+        foreach (var i in bundle.LoadAllAssets())
         {
-            Console.WriteLine("renderer: " + renderer.name);
-			Material[] materials = renderer.materials;
-			for (int j = 0; j < materials.Length; j++)
-			{
-				string text = CleanUpName(materials[j].name);
-				Console.WriteLine("texture: " + text);
-			}
-		}
+            if (i.name == "p_cf_sv_head_01_low")
+            {
+                GameObject ga = i.TryCast<GameObject>();
+                var instance = UnityEngine.Object.Instantiate(ga);
+                instance.name = "Morph info carrier";
+                foreach (var j in instance.GetComponentsInChildren<SkinnedMeshRenderer>())
+                {
+                    meshes.Add(j.sharedMesh.name, j.sharedMesh);
+                }
+                break;
+            }
+        }
+        bundle.Unload(false);
+        fs.Close();
+
+        if (meshes.Count == 0)
+        {
+            Console.WriteLine("Load from assetbundle failed.Bundle: " + "abdata/chara/head/head_02.unity3d");
+            return;
+        }
+
+        var fBSTarget = human.face.eyesCtrl.FBSTarget;
+
+
+        for (int i = 0; i < fBSTarget.Length; i++)
+        {
+            var smr = fBSTarget[i].GetSkinnedMeshRenderer();
+			Mesh mesh = smr.sharedMesh;
+   //         Mesh mesh = meshes[CleanUpName(smr.sharedMesh.name)];
+			//Console.WriteLine(mesh.isReadable + " " + mesh.blendShapeCount);
+
+			Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> array = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.vertices.Length);
+			Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> deltaNormals = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.normals.Length);
+			Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> deltaTangents = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.tangents.Length);
+            //UnityEngine.Vector3[] array = new UnityEngine.Vector3[mesh.vertices.Length];
+            //UnityEngine.Vector3[] deltaNormals = new UnityEngine.Vector3[mesh.normals.Length];
+            //UnityEngine.Vector3[] deltaTangents = new UnityEngine.Vector3[mesh.tangents.Length];
+
+            for (int j = 0; j < mesh.blendShapeCount; j++)
+            {
+				Console.WriteLine(mesh.GetBlendShapeFrameCount(j));
+                mesh.GetBlendShapeFrameVertices(j, 0, array, deltaNormals, deltaTangents);
+                for (int k = 0; k < array.Length; k++)
+                {
+					if (array[k].x != 0 || array[k].y != 0 || array[k].z != 0)
+					{
+						Console.WriteLine(array[k].x + " " + array[k].y + " " + array[k].z);
+					}
+
+                }
+            }
+        }
     }
 
 	public IEnumerator BuildStart()
@@ -977,6 +1023,7 @@ internal class PmxBuilder
 			if (nowCoordinate == maxCoord)
 			{
 				vertexCountRecord.Add(componentsInChildren[i].name + componentsInChildren[i].sharedMaterial.name, total + mesh.vertexCount);
+				total += mesh.vertexCount;
             }
 			//_ = componentsInChildren[i].gameObject;
 			BoneWeight[] boneWeights = componentsInChildren[i].sharedMesh.boneWeights;
@@ -1117,33 +1164,6 @@ internal class PmxBuilder
 	private void CreateMorph()
 	{
         Human human = SVSExporterPlugin.selectedChara;
-        Dictionary<string, Mesh> meshes = new();
-
-        var fs = new Il2CppSystem.IO.FileStream("abdata/chara/head/head_02.unity3d", Il2CppSystem.IO.FileMode.Open, Il2CppSystem.IO.FileAccess.Read);
-        var bundle = AssetBundle.LoadFromStream(fs);
-
-        foreach (var i in bundle.LoadAllAssets())
-        {
-            if (i.name == "p_cf_sv_head_01_low")
-            {
-                GameObject ga = i.TryCast<GameObject>();
-                var instance = UnityEngine.Object.Instantiate(ga);
-				instance.name = "Morph info carrier";
-                foreach (var j in instance.GetComponentsInChildren<SkinnedMeshRenderer>())
-                {
-                    meshes.Add(j.sharedMesh.name, j.sharedMesh);
-                }
-				break;
-            }
-        }
-        bundle.Unload(false);
-        fs.Close();
-
-		if (meshes.Count == 0)
-		{
-			Console.WriteLine("Load from assetbundle failed.Bundle: " + "abdata/chara/head/head_02.unity3d");
-			return;
-		}
 
         //Eye
         var fBSTarget = human.face.eyesCtrl.FBSTarget;
@@ -1152,16 +1172,16 @@ internal class PmxBuilder
 		for(int i = 0;i < fBSTarget.Length; i++)
 		{
 			var smr = fBSTarget[i].GetSkinnedMeshRenderer();
-			Mesh mesh = meshes[CleanUpName(smr.sharedMesh.name)];
+			var mesh = smr.sharedMesh;
 
 			if (!vertexCountRecord.TryGetValue(smr.name + smr.sharedMaterial.name, out int num))
 			{
 				continue;
 			}
 
-            UnityEngine.Vector3[] array = new UnityEngine.Vector3[mesh.vertices.Length];
-            UnityEngine.Vector3[] deltaNormals = new UnityEngine.Vector3[mesh.normals.Length];
-            UnityEngine.Vector3[] deltaTangents = new UnityEngine.Vector3[mesh.tangents.Length];
+            Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> array = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.vertices.Length);
+            Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> deltaNormals = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.normals.Length);
+            Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> deltaTangents = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.tangents.Length);
 
             for (int j = 0; j < mesh.blendShapeCount; j++)
 			{
@@ -1206,16 +1226,16 @@ internal class PmxBuilder
         for (int i = 0; i < fBSTarget.Length; i++)
         {
             var smr = fBSTarget[i].GetSkinnedMeshRenderer();
-            Mesh mesh = meshes[CleanUpName(smr.sharedMesh.name)];
+			var mesh = smr.sharedMesh;
 
             if (!vertexCountRecord.TryGetValue(smr.name + smr.sharedMaterial.name, out int num))
             {
                 continue;
             }
 
-            UnityEngine.Vector3[] array = new UnityEngine.Vector3[mesh.vertices.Length];
-            UnityEngine.Vector3[] deltaNormals = new UnityEngine.Vector3[mesh.normals.Length];
-            UnityEngine.Vector3[] deltaTangents = new UnityEngine.Vector3[mesh.tangents.Length];
+            Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> array = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.vertices.Length);
+            Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> deltaNormals = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.normals.Length);
+            Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> deltaTangents = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.tangents.Length);
 
             for (int j = 0; j < mesh.blendShapeCount; j++)
             {
@@ -1260,16 +1280,16 @@ internal class PmxBuilder
         for (int i = 0; i < fBSTarget.Length; i++)
         {
             var smr = fBSTarget[i].GetSkinnedMeshRenderer();
-            Mesh mesh = meshes[CleanUpName(smr.sharedMesh.name)];
+            var mesh = smr.sharedMesh;
 
             if (!vertexCountRecord.TryGetValue(smr.name + smr.sharedMaterial.name, out int num))
             {
                 continue;
             }
 
-            UnityEngine.Vector3[] array = new UnityEngine.Vector3[mesh.vertices.Length];
-            UnityEngine.Vector3[] deltaNormals = new UnityEngine.Vector3[mesh.normals.Length];
-            UnityEngine.Vector3[] deltaTangents = new UnityEngine.Vector3[mesh.tangents.Length];
+            Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> array = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.vertices.Length);
+            Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> deltaNormals = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.normals.Length);
+            Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> deltaTangents = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.tangents.Length);
 
             for (int j = 0; j < mesh.blendShapeCount; j++)
             {
@@ -2478,6 +2498,14 @@ internal class PmxBuilder
 		EndArray(stringBuilder);
 		EndObject(stringBuilder);
 		return stringBuilder.ToString();
+	}
+
+	public static UnityEngine.Vector2[] GenerateUV(UnityEngine.Vector3[] vertices, int[] triangles)
+	{
+		UnityEngine.Vector2[] uv = new UnityEngine.Vector2[vertices.Length];
+		
+
+		return uv;
 	}
 
 	public static void BeginObject(StringBuilder sb)
