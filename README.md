@@ -5,12 +5,6 @@ A BepInEx plugin for Summer Vacation Scramble to export characters to PMX.This p
 
 Put the .dll to plugin folder
 
-Put the file "head_02.unity3d" to "abdata\chara\head"
-
-<img width="999" height="343" alt="无标题" src="https://github.com/user-attachments/assets/d3818840-429d-4a39-b004-90ae29de8e90" />
-
----
-
 Press Ctrl + Tab in the character maker, then a menu will appear
 
 <img width="516" height="683" alt="屏幕截图 2025-09-20 161910" src="https://github.com/user-attachments/assets/cf890c3f-7cb1-4e93-ae95-3ec936b47b9a" />
@@ -35,8 +29,6 @@ After minutes, the model will appear
 
 ---
 ## Issue
-
-Shape keys are currently unavailable
 
 Some Accessories may disappear due to missing uv when baking materials
 
