@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace SVSExporter.Utils
 {
-    internal class TextureSaver
+    static class TextureSaver
     {
         public static void SaveTexture(Color32[] colors, int textureWidth, int textureHeight, string path)
         {

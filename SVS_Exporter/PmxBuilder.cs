@@ -1,8 +1,10 @@
 using Character;
 using CharacterCreation;
+using Il2CppInterop.Runtime;
 using Il2CppSystem.Linq;
 using IllusionMods;
 using PmxLib;
+using RuntimeUnityEditor.Core.Utils;
 using SVSExporter;
 using SVSExporter.Utils;
 using System;
@@ -152,70 +154,23 @@ internal class PmxBuilder
     private string charaName;
 
 
-	public static void test()
+	public static void Test()
 	{
-        Human human = SVSExporterPlugin.selectedChara;
-        Dictionary<string, Mesh> meshes = new();
-
-        var fs = new Il2CppSystem.IO.FileStream("abdata/chara/head/head_02.unity3d", Il2CppSystem.IO.FileMode.Open, Il2CppSystem.IO.FileAccess.Read);
-        var bundle = AssetBundle.LoadFromStream(fs);
-
-        foreach (var i in bundle.LoadAllAssets())
-        {
-            if (i.name == "p_cf_sv_head_01_low")
-            {
-                GameObject ga = i.TryCast<GameObject>();
-                var instance = UnityEngine.Object.Instantiate(ga);
-                instance.name = "Morph info carrier";
-                foreach (var j in instance.GetComponentsInChildren<SkinnedMeshRenderer>())
-                {
-                    meshes.Add(j.sharedMesh.name, j.sharedMesh);
-                }
-                break;
-            }
-        }
-        bundle.Unload(false);
-        fs.Close();
-
-        if (meshes.Count == 0)
-        {
-            Console.WriteLine("Load from assetbundle failed.Bundle: " + "abdata/chara/head/head_02.unity3d");
-            return;
-        }
-
-        var fBSTarget = human.face.eyesCtrl.FBSTarget;
+		MeshFilter[] componentsInChildren = GameObject.Find("BodyTop").transform.GetComponentsInChildren<MeshFilter>(includeInactive: true);
+		GameObject test = new GameObject("test");
+		var skin = test.AddComponent<SkinnedMeshRenderer>();
+		Mesh mesh = new Mesh();
 
 
-        for (int i = 0; i < fBSTarget.Length; i++)
-        {
-            var smr = fBSTarget[i].GetSkinnedMeshRenderer();
-			Mesh mesh = smr.sharedMesh;
-   //         Mesh mesh = meshes[CleanUpName(smr.sharedMesh.name)];
-			//Console.WriteLine(mesh.isReadable + " " + mesh.blendShapeCount);
-
-			Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> array = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.vertices.Length);
-			Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> deltaNormals = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.normals.Length);
-			Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3> deltaTangents = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<UnityEngine.Vector3>(mesh.tangents.Length);
-            //UnityEngine.Vector3[] array = new UnityEngine.Vector3[mesh.vertices.Length];
-            //UnityEngine.Vector3[] deltaNormals = new UnityEngine.Vector3[mesh.normals.Length];
-            //UnityEngine.Vector3[] deltaTangents = new UnityEngine.Vector3[mesh.tangents.Length];
-
-            for (int j = 0; j < mesh.blendShapeCount; j++)
-            {
-				Console.WriteLine(mesh.GetBlendShapeFrameCount(j));
-                mesh.GetBlendShapeFrameVertices(j, 0, array, deltaNormals, deltaTangents);
-                for (int k = 0; k < array.Length; k++)
-                {
-					if (array[k].x != 0 || array[k].y != 0 || array[k].z != 0)
-					{
-						Console.WriteLine(array[k].x + " " + array[k].y + " " + array[k].z);
-					}
-
-                }
-            }
-        }
+        foreach (var i in componentsInChildren)
+		{
+			Console.WriteLine(i.sharedMesh.name + " " + i.sharedMesh.isReadable + " " + i.sharedMesh.canAccess);
+			skin.sharedMesh = i.sharedMesh;
+			mesh.Clear();
+			skin.BakeMesh(mesh);
+			Console.WriteLine(mesh.vertices.Count);
+		}
     }
-
 	public IEnumerator BuildStart()
 	{
         Human human = SVSExporterPlugin.selectedChara;
@@ -245,7 +200,7 @@ internal class PmxBuilder
 		CleanUp();
 		OpenFolderInExplorer(savePath);
 		Console.WriteLine("Finished");
-    }
+	}
 
     private void BuildStart_BG()
 	{
@@ -269,25 +224,25 @@ internal class PmxBuilder
             }
             CreateMeshList();
 
-            if (nowCoordinate == maxCoord)
+			if (nowCoordinate == maxCoord)
             {
             	CreateMorph();
 				//ExportGagEyes();
 			}
-			AddAccessory();
+            AddAccessory();
 			ExportLightTexture();
 			if (nowCoordinate < maxCoord)
 			{
-                try
-                {
-                    CreateDynamicBonesData();
-                    CreateDynamicBoneCollidersData();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex);
-                }
-            }
+				try
+				{
+					CreateDynamicBonesData();
+					CreateDynamicBoneCollidersData();
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine(ex);
+				}
+			}
 
 			CreatePmxHeader();
 			Save();
@@ -297,7 +252,7 @@ internal class PmxBuilder
 		{
 			Console.WriteLine(ex.Message + "\n" + ex.StackTrace);
 		}
-   
+
 	}
 	
 	private void Prepare()
@@ -307,26 +262,26 @@ internal class PmxBuilder
 
         GameObject.Find("Cvs_BackGround").GetComponent<Canvas>().enabled = false;
         Camera camera = gameObjectMeshCopier.AddComponent<Camera>();
-        GameObject light = Light.FindObjectsOfType<Light>()[0].gameObject;
+		GameObject light = Light.FindObjectsOfType<Light>()[0].gameObject;
 
-        camera.CopyFrom(Camera.main);
+		camera.CopyFrom(Camera.main);
 		recoverInfos.Clear();
-        recoverInfos.Add(light.transform.rotation);
-        recoverInfos.Add(light.transform.position);
-        recoverInfos.Add(camera.transform.position);
-        recoverInfos.Add(camera.transform.rotation);
+		recoverInfos.Add(light.transform.rotation);
+		recoverInfos.Add(light.transform.position);
+		recoverInfos.Add(camera.transform.position);
+		recoverInfos.Add(camera.transform.rotation);
 
-        camera.orthographic = true;
-        camera.aspect = 1f;
+		camera.orthographic = true;
+		camera.aspect = 1f;
 
-        camera.clearFlags = CameraClearFlags.SolidColor;
-        camera.allowHDR = false;
-        camera.allowMSAA = false;
-        camera.cullingMask = 1 << 10;
+		camera.clearFlags = CameraClearFlags.SolidColor;
+		camera.allowHDR = false;
+		camera.allowMSAA = false;
+		camera.cullingMask = 1 << 10;
 
 		//human.body.LoadAnimation("custom/00.unity3d", "tpose");
-		
-    }
+
+	}
 	private void SetSavePath()
 	{
         if (nowCoordinate == maxCoord)
@@ -362,10 +317,6 @@ internal class PmxBuilder
 		{
 			GameObject.Destroy(gameObjectMeshCopier);
 
-			//foreach (var info in finalBoneInfo.Values)
-			//{
-			//	info.targetTransform.localScale = info._scale;
-			//}
             finalBoneInfo.Clear();
             editBoneInfo.Clear();
 			uvAdjustments.Clear();
@@ -389,7 +340,8 @@ internal class PmxBuilder
 		}
 		finally
 		{
-			Human human = SVSExporterPlugin.selectedChara;
+			pmxFile = null;
+            Human human = SVSExporterPlugin.selectedChara;
 			human.Reload();
 		}
 	}
@@ -399,7 +351,7 @@ internal class PmxBuilder
 
         string[] ignoredSMRs = { "cf_O_gag_eye_00", "cf_O_gag_eye_01", "cf_O_gag_eye_02", "cf_O_namida_L", "cf_O_namida_M", "cf_O_namida_S", "Highlight_o_body_a_rend", "Highlight_cf_O_face_rend", "o_Mask" };
 		string[] ignoredShaders = { "LIF/lit_hair_overlay", "LIF/lif_main_hair_outline" };
-        GameObject light = Light.FindObjectsOfType<Light>()[0].gameObject;// The scene has only one light.But I'm failed to get the light by its name
+        GameObject light = Light.FindObjectsOfType<Light>()[0].gameObject;
         Camera camera = gameObjectMeshCopier.GetComponent<Camera>();
         Camera cameraMain = Camera.main;
         SkinnedMeshRenderer meshCopier = gameObjectMeshCopier.GetComponent<SkinnedMeshRenderer>();
@@ -428,13 +380,13 @@ internal class PmxBuilder
                 continue;
             }
             Console.WriteLine("Exporting textures for " + smr.name);
-            Mesh mesh = new Mesh();
+			Mesh mesh = new Mesh();
             LightProbeUsage probeUsage;
             Transform probeAnchor;
             ShadowCastingMode probeCastingMode;
             MaterialPropertyBlock materialPropertyBlock = new MaterialPropertyBlock();
             bool receiveShadow;
-            int subMeshCount = mesh.subMeshCount;
+            
             if (smr.GetType().Name == "SkinnedMeshRenderer")
             {
                 var _tmp = (SkinnedMeshRenderer)smr;
@@ -447,44 +399,31 @@ internal class PmxBuilder
                 _tmp.GetPropertyBlock(materialPropertyBlock);
 
             }
-            else
-            {
-                MeshFilter meshFilter = smr.gameObject.GetComponent<MeshFilter>();
-                var _tmp = (MeshRenderer)smr;
-                if (meshFilter.mesh != null)
-                {
-                    meshCopier.sharedMesh = meshFilter.mesh;
-                }
-                else
-                {
-                    meshCopier.sharedMesh = meshFilter.sharedMesh;
-                }
+			else
+			{
+				MeshFilter meshFilter = smr.gameObject.GetComponent<MeshFilter>();
+				var _tmp = (MeshRenderer)smr;
+                meshCopier.sharedMesh = meshFilter.sharedMesh;
+                meshCopier.sharedMesh.UploadMeshData(false);
+                meshCopier.sharedMesh.MarkModified();
                 meshCopier.BakeMesh(mesh);
                 meshCopier.sharedMesh = null;
-
-                probeUsage = _tmp.lightProbeUsage;
-                probeAnchor = _tmp.probeAnchor;
-                probeCastingMode = _tmp.shadowCastingMode;
-                receiveShadow = _tmp.receiveShadows;
-                _tmp.GetPropertyBlock(materialPropertyBlock);
-
-            }
-            if (probeAnchor != null)
-            {
-                Console.WriteLine(probeAnchor.position + " " + probeAnchor.forward);
-            }
-
-            Il2CppSystem.Collections.Generic.List<UnityEngine.Vector2> uvs = new();
-			for(int j = 0;j < 8; j++)
-			{
-				mesh.GetUVs(j, uvs);
-				if (uvs != null && uvs.Count > 0)
+				if (mesh.vertices.Count == 0)
 				{
-					break;
-				}
+					Console.WriteLine("Could not get vertices, skip");
+					continue;
+                }
+                probeUsage = _tmp.lightProbeUsage;
+				probeAnchor = _tmp.probeAnchor;
+				probeCastingMode = _tmp.shadowCastingMode;
+				receiveShadow = _tmp.receiveShadows;
+				_tmp.GetPropertyBlock(materialPropertyBlock);
 
 			}
-			if (uvs == null || uvs.Count == 0)
+            int subMeshCount = mesh.subMeshCount;
+
+			var uvs = mesh.uv;
+			if (uvs == null || uvs.Length == 0)
 			{
                 Console.WriteLine("No uv map, ignore");
 				continue;
@@ -495,13 +434,13 @@ internal class PmxBuilder
             int xOffset;
             int yOffset;
             int layer = smr.gameObject.layer;// Do not forget to drawmesh in this layer
-            UnityEngine.Vector3[] verts = new UnityEngine.Vector3[uvs.Count];
+            UnityEngine.Vector3[] verts = new UnityEngine.Vector3[uvs.Length];
             // Transform mesh into a surface according to its uv
             float minX = float.PositiveInfinity;
             float minY = float.PositiveInfinity;
             float maxX = float.NegativeInfinity;
             float maxY = float.NegativeInfinity;
-            for (int j = 0; j < uvs.Count; j++)
+            for (int j = 0; j < uvs.Length; j++)
             {
                 verts[j] = new UnityEngine.Vector3(-uvs[j].x, uvs[j].y, 0f);
                 minX = Mathf.Min(minX, uvs[j].x);
@@ -514,6 +453,15 @@ internal class PmxBuilder
             yOffset = ((int)Math.Floor(minY));
             horizontalBlockCount = (int)Math.Ceiling(maxX) - xOffset;
             verticalBlockCount = (int)Math.Ceiling(maxY) - yOffset;
+
+			if (horizontalBlockCount == 0 || verticalBlockCount == 0)
+			{
+				horizontalBlockCount = 1;
+				verticalBlockCount = 1;
+				var v0 = verts[mesh.triangles[0]];
+				verts[mesh.triangles[1]].x = v0.x + 1;
+				verts[mesh.triangles[2]].y = v0.y + 1;
+			}
 
             // Correct triangle if its normal direction is not positive z
             var triangles = mesh.triangles;
@@ -739,7 +687,7 @@ internal class PmxBuilder
             }
             if (mesh != null)
             {
-                Mesh.Destroy(mesh);
+                Mesh.DestroyImmediate(mesh);
             }
         }
         
@@ -1088,7 +1036,7 @@ internal class PmxBuilder
 				pmxVertex.Deform = PmxVertex.DeformType.BDEF4;
 				pmxFile.VertexList.Add(pmxVertex);
 			}
-            Mesh.Destroy(mesh);
+            Mesh.DestroyImmediate(mesh);
         }
 	}
 
@@ -1357,7 +1305,9 @@ internal class PmxBuilder
 		
 		SkinnedMeshRenderer meshCopier = gameObjectMeshCopier.GetComponent<SkinnedMeshRenderer>();
 
-		for (int i = 0; i < componentsInChildren.Length; i++)
+		int index = 0;
+
+        for (int i = 0; i < componentsInChildren.Length; i++)
 		{
 			MeshRenderer meshRenderer = componentsInChildren[i].gameObject.GetComponent<MeshRenderer>();
 			if (
@@ -1402,73 +1352,74 @@ internal class PmxBuilder
 				currentRendererMaterialMapping.Add(meshRenderer, sMRData.SMRMaterialNames);
 			}
 			GameObject gameObject = componentsInChildren[i].gameObject;
+            Transform transform = componentsInChildren[i].gameObject.transform;
+            int bone = sbi(GetAltBoneName(transform), transform.GetInstanceID().ToString());
+
 			Mesh mesh = new Mesh();
 
-			if (componentsInChildren[i].mesh != null)
-			{
-				meshCopier.sharedMesh = componentsInChildren[i].mesh;
-			}
-			else
-			{
-				meshCopier.sharedMesh = componentsInChildren[i].sharedMesh;
-			}
-			meshCopier.BakeMesh(mesh);
-			meshCopier.sharedMesh = null;
+            meshCopier.sharedMesh = componentsInChildren[i].mesh;
+            meshCopier.BakeMesh(mesh);
+            meshCopier.sharedMesh = null;
 
-			//_ = sharedMesh.boneWeights;
-			Transform transform = componentsInChildren[i].gameObject.transform;
-			int bone = sbi(GetAltBoneName(transform), transform.GetInstanceID().ToString());
-			UnityEngine.Vector2[] uv = mesh.uv;
-			List<UnityEngine.Vector2[]> list = new List<UnityEngine.Vector2[]> { mesh.uv2, mesh.uv3, mesh.uv4 };
-			UnityEngine.Vector3[] normals = mesh.normals;
-			UnityEngine.Vector3[] vertices = mesh.vertices;
-			for (int j = 0; j < mesh.subMeshCount; j++)
+			if(mesh.vertexCount == 0)
 			{
-				int[] triangles = mesh.GetTriangles(j);
-				AddFaceList(triangles, vertexCount);
-				CreateMaterial(meshRenderer.sharedMaterials[j], sMRData.SMRMaterialNames[j], triangles.Length);
+				Console.WriteLine("Could not export this mesh, ignore");
+				continue;
 			}
-			vertexCount += mesh.vertexCount;
-			bool uv_error_flag = false;
-			for (int k = 0; k < mesh.vertexCount; k++)
-			{
-				PmxVertex pmxVertex = new PmxVertex();
-				try {
-					pmxVertex.UV = new PmxLib.Vector2(uv[k].x, (float)((double)(0f - uv[k].y) + 1.0));
-					pmxVertex.Weight = new PmxVertex.BoneWeight[4];
-				}
-				catch {
-					if (uv_error_flag == false)
-					{
-						Console.WriteLine("Issue - Object did not have a UV map: " + meshRenderer.name);
-					}
-					uv_error_flag = true;
-					pmxVertex.UV = new PmxLib.Vector2();
-					pmxVertex.Weight = new PmxVertex.BoneWeight[4];
-				}
-				pmxVertex.Weight[0].Bone = bone;
-				pmxVertex.Weight[0].Value = 1f;
-				for (int l = 0; l < list.Count; l++)
-				{
-					if (list[l].Length != 0)
-					{
-						pmxVertex.UVA[l] = new PmxLib.Vector4(list[l][k].x, (float)((double)(0f - list[l][k].y) + 1.0), 0f, 0f);
-					}
-				}
-				UnityEngine.Vector3 vector = gameObject.transform.TransformDirection(normals[k]);
-				pmxVertex.Normal = new PmxLib.Vector3(0f - vector.x, vector.y, 0f - vector.z);
-				UnityEngine.Vector3 vector2 = gameObject.transform.TransformPoint(vertices[k]);
-				pmxVertex.Position = new PmxLib.Vector3((0f - vector2.x) * (float)scale, vector2.y * (float)scale, (0f - vector2.z) * (float)scale);
-				pmxVertex.Deform = PmxVertex.DeformType.BDEF4;
-				pmxFile.VertexList.Add(pmxVertex);
-			}
+
+            UnityEngine.Vector2[] uv = mesh.uv;
+            List<UnityEngine.Vector2[]> list = new List<UnityEngine.Vector2[]> { mesh.uv2, mesh.uv3, mesh.uv4 };
+            UnityEngine.Vector3[] normals = mesh.normals;
+            UnityEngine.Vector3[] vertices = mesh.vertices;
+            for (int j = 0; j < mesh.subMeshCount; j++)
+            {
+                int[] triangles = mesh.GetTriangles(j);
+                AddFaceList(triangles, vertexCount);
+                CreateMaterial(meshRenderer.sharedMaterials[j], sMRData.SMRMaterialNames[j], triangles.Length);
+            }
+            vertexCount += mesh.vertexCount;
+            bool uv_error_flag = false;
+            for (int k = 0; k < mesh.vertexCount; k++)
+            {
+                PmxVertex pmxVertex = new PmxVertex();
+                try
+                {
+                    pmxVertex.UV = new PmxLib.Vector2(uv[k].x, (float)((double)(0f - uv[k].y) + 1.0));
+                    pmxVertex.Weight = new PmxVertex.BoneWeight[4];
+                }
+                catch
+                {
+                    if (uv_error_flag == false)
+                    {
+                        Console.WriteLine("Issue - Object did not have a UV map: " + meshRenderer.name);
+                    }
+                    uv_error_flag = true;
+                    pmxVertex.UV = new PmxLib.Vector2();
+                    pmxVertex.Weight = new PmxVertex.BoneWeight[4];
+                }
+                pmxVertex.Weight[0].Bone = bone;
+                pmxVertex.Weight[0].Value = 1f;
+                for (int l = 0; l < list.Count; l++)
+                {
+                    if (list[l].Length != 0)
+                    {
+                        pmxVertex.UVA[l] = new PmxLib.Vector4(list[l][k].x, (float)((double)(0f - list[l][k].y) + 1.0), 0f, 0f);
+                    }
+                }
+                UnityEngine.Vector3 vector = gameObject.transform.TransformDirection(normals[k]);
+                pmxVertex.Normal = new PmxLib.Vector3(0f - vector.x, vector.y, 0f - vector.z);
+                UnityEngine.Vector3 vector2 = gameObject.transform.TransformPoint(vertices[k]);
+                pmxVertex.Position = new PmxLib.Vector3((0f - vector2.x) * (float)scale, vector2.y * (float)scale, (0f - vector2.z) * (float)scale);
+                pmxVertex.Deform = PmxVertex.DeformType.BDEF4;
+                pmxFile.VertexList.Add(pmxVertex);
+            }
             //ExportLightTexture(mesh, meshRenderer.materials, sMRData.SMRName, meshRenderer, sMRData.SMRMaterialNames);
-            Mesh.Destroy(mesh);
+            Mesh.DestroyImmediate(mesh);
         }
 
 	}
 
-	public void CreateBoneList()
+    public void CreateBoneList()
 	{
 		offsetBoneCandidates.Clear();
 		currentBonesList.Clear();

@@ -231,7 +231,6 @@ namespace SVSExporter
                 _pmxBuilder = new PmxBuilder();
                 component.StartCoroutine(_pmxBuilder.BuildStart().WrapToIl2Cpp());
 
-                //PmxBuilder.test();
             }));
             _buttons.Add(new ActionButton("ExportAllOutfits", () =>
             {
@@ -239,7 +238,6 @@ namespace SVSExporter
                 _pmxBuilder.exportAllOutfits = true;
                 component.StartCoroutine(_pmxBuilder.BuildStart().WrapToIl2Cpp());
 
-                //PmxBuilder.test();
             }));
         }
     }
