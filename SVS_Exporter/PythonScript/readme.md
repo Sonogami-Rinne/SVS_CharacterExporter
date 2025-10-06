@@ -12,6 +12,8 @@ pyinstaller -F process.py --add-data "C:\Users\Administrator\AppData\Local\Packa
 Adjust the parameters based on your own situation.
 Or you can use python.exe to execute the script directly.
 
+---
+
 Process.py 是一个Python脚本。
 它处理特定的unity3d包，让部分饰品的网格对象可读。
 目前，这个脚本只处理游戏自带的unity3d包
