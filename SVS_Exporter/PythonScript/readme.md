@@ -1,19 +1,38 @@
 The process.py is a Python script.
+
 It process bundles to make accessory meshes readable.
+
 Currently, this script only process bundles that original game have.
+
 It do NOT process bundles that added by mod.
 
 You need to use pyinstaller to turn this py file into exe.
-For example: pyinstaller -F process.py --add-data "C:\Users\Administrator\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\UnityPy\resources;UnityPy\resources"
+
+For example: 
+```bash
+pyinstaller -F process.py --add-data "C:\Users\Administrator\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\UnityPy\resources;UnityPy\resources"
+```
+
 Adjust the parameters based on your own situation.
+
 Or you can use python.exe to execute the script directly.
 
-Process.py ÊÇÒ»¸öPython½Å±¾¡£
-Ëü´¦ÀíÌØ¶¨µÄunity3d°ü£¬ÈÃ²¿·ÖÊÎÆ·µÄÍø¸ñ¶ÔÏó¿É¶Á¡£
-Ä¿Ç°£¬Õâ¸ö½Å±¾Ö»´¦ÀíÓÎÏ·×Ô´øµÄunity3d°ü
-Ëü²»´¦Àímod¼ÓµÄunity3d°ü
+---
 
-ÄãĞèÒªÊ¹ÓÃpyinstallerÀ´°Ñ¸Ã½Å±¾±àÒëÎªexeÎÄ¼ş
-ÀıÈç: pyinstaller -F process.py --add-data "C:\Users\Administrator\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\UnityPy\resources;UnityPy\resources"
-¸ù¾İÄã×Ô¼ºµÄÇé¿öÀ´µ÷Õû²ÎÊı
-»òÕßÖ±½ÓÊ¹ÓÃpython.exeÀ´Ö´ĞĞÄÇ¸ö½Å±¾
+Process.py æ˜¯ä¸€ä¸ªPythonè„šæœ¬ã€‚
+
+å®ƒå¤„ç†ç‰¹å®šçš„unity3dåŒ…ï¼Œè®©éƒ¨åˆ†é¥°å“çš„ç½‘æ ¼å¯¹è±¡å¯è¯»ã€‚
+
+ç›®å‰ï¼Œè¿™ä¸ªè„šæœ¬åªå¤„ç†æ¸¸æˆè‡ªå¸¦çš„unity3dåŒ…
+
+å®ƒä¸å¤„ç†modåŠ çš„unity3dåŒ…
+
+ä½ éœ€è¦ä½¿ç”¨pyinstalleræ¥æŠŠè¯¥è„šæœ¬ç¼–è¯‘ä¸ºexeæ–‡ä»¶
+
+ä¾‹å¦‚: 
+```bash
+pyinstaller -F process.py --add-data "C:\Users\Administrator\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.9_qbz5n2kfra8p0\LocalCache\local-packages\Python39\site-packages\UnityPy\resources;UnityPy\resources"
+```
+æ ¹æ®ä½ è‡ªå·±çš„æƒ…å†µæ¥è°ƒæ•´å‚æ•°
+
+æˆ–è€…ç›´æ¥ä½¿ç”¨python.exeæ¥æ‰§è¡Œé‚£ä¸ªè„šæœ¬
