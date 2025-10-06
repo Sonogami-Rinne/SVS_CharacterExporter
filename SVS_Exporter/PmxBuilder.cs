@@ -73,7 +73,9 @@ internal class PmxBuilder
 		"cf_d_sk_07_00", "cf_j_sk_07_00", "cf_j_sk_07_01", "cf_j_sk_07_02", "cf_j_sk_07_03", "cf_j_sk_07_04", "cf_j_sk_07_05"
 	};
 
-	public bool exportAllOutfits = false;
+    string[] ignoredShaders = { "LIF/lit_hair_overlay", "LIF/lif_main_hair_outline" };
+
+    public bool exportAllOutfits = false;
 
     public static int minCoord;
 
@@ -350,7 +352,6 @@ internal class PmxBuilder
         GameObject.Find("BodyTop").transform.Translate(new UnityEngine.Vector3(0, 10, 0));
 
         string[] ignoredSMRs = { "cf_O_gag_eye_00", "cf_O_gag_eye_01", "cf_O_gag_eye_02", "cf_O_namida_L", "cf_O_namida_M", "cf_O_namida_S", "Highlight_o_body_a_rend", "Highlight_cf_O_face_rend", "o_Mask" };
-		string[] ignoredShaders = { "LIF/lit_hair_overlay", "LIF/lif_main_hair_outline" };
         GameObject light = Light.FindObjectsOfType<Light>()[0].gameObject;
         Camera camera = gameObjectMeshCopier.GetComponent<Camera>();
         Camera cameraMain = Camera.main;
@@ -924,25 +925,27 @@ internal class PmxBuilder
 		for (int i = 0; i < componentsInChildren.Length; i++)
 		{
 			if (
-                (
-                    nowCoordinate < maxCoord
-                    &&
-                    (
+				(
+					nowCoordinate < maxCoord
+					&&
+					(
 						(!componentsInChildren[i].enabled || !componentsInChildren[i].isVisible)
 						||
 						ignoreList.Contains(componentsInChildren[i].name, StringComparer.Ordinal)
 						||
 						componentsInChildren[i].sharedMaterials.Length == 0
 					)
-                )
-                || 
-				(
-					nowCoordinate == maxCoord 
-					&&
-                    !ignoreList.Contains(componentsInChildren[i].name, StringComparer.Ordinal)
-                )
+				)
 				||
-                source3.Contains(componentsInChildren[i].name, StringComparer.Ordinal)
+				(
+					nowCoordinate == maxCoord
+					&&
+					!ignoreList.Contains(componentsInChildren[i].name, StringComparer.Ordinal)
+				)
+				||
+				source3.Contains(componentsInChildren[i].name, StringComparer.Ordinal)
+				||
+				ignoredShaders.Contains(componentsInChildren[i].sharedMaterial?.shader.name)
 
             )
 			{
