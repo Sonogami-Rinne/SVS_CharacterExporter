@@ -36,8 +36,6 @@ After minutes, the model will appear
 ---
 ## Issue
 
-If the model use some unreadable accessories added by mod, this plugin would not export them.You can modify the Python script to process those unity3d packs added by mod.
-
 A better T-Pose mod is needed
 
 ## Credits
