@@ -39,4 +39,4 @@ After minutes, the model will appear
 A better T-Pose mod is needed
 
 ## Credits
-This plugin is based on [Illusion_ClothingStateMenu](https://github.com/ManlyMarco/Illusion_ClothingStateMenu) and [KKBP_Exporter](https://github.com/FlailingFog/KKBP_Exporter), plugin for blender is based on [KK-Blender-Porter-Pack](https://github.com/FlailingFog/KK-Blender-Porter-Pack)
+This plugin is based on [Illusion_ClothingStateMenu](https://github.com/ManlyMarco/Illusion_ClothingStateMenu) and [KKBP_Exporter](https://github.com/FlailingFog/KKBP_Exporter)
