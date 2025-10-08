@@ -13,7 +13,6 @@ using System.Linq;
 using UnityEngine;
 using BepInEx.Unity.IL2CPP.Utils;
 using System.Collections;
-using XUnity.AutoTranslator.Plugin.Core.Utilities;
 using BepInEx.Unity.IL2CPP.Utils.Collections;
 
 namespace SVSExporter
@@ -228,6 +227,7 @@ namespace SVSExporter
 
             _buttons.Add(new ActionButton("Export", () =>
             {
+                //PmxBuilder.Test();
                 _pmxBuilder = new PmxBuilder();
                 component.StartCoroutine(_pmxBuilder.BuildStart().WrapToIl2Cpp());
 

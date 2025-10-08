@@ -37,21 +37,21 @@ internal static class GameUtilities
     /// Get a display name of the character. Only use in interface, not for keeping track of the character.
     /// If <paramref name="translated"/> is true and AutoTranslator is active, try to get a translated version of the name in current language. Otherwise, return the original name.
     /// </summary>
-    public static string GetCharaName(this Actor chara, bool translated)
-    {
-        var fullname = chara?.charFile?.Parameter.GetCharaName(translated);
-        if (!string.IsNullOrEmpty(fullname))
-        {
-            if (translated)
-            {
-                TranslationHelper.TryTranslate(fullname, out var translatedName);
-                if (!string.IsNullOrEmpty(translatedName))
-                    return translatedName;
-            }
-            return fullname;
-        }
-        return chara?.chaCtrl?.name ?? chara?.ToString();
-    }
+    //public static string GetCharaName(this Actor chara, bool translated)
+    //{
+    //    var fullname = chara?.charFile?.Parameter.GetCharaName(translated);
+    //    if (!string.IsNullOrEmpty(fullname))
+    //    {
+    //        if (translated)
+    //        {
+    //            TranslationHelper.TryTranslate(fullname, out var translatedName);
+    //            if (!string.IsNullOrEmpty(translatedName))
+    //                return translatedName;
+    //        }
+    //        return fullname;
+    //    }
+    //    return chara?.chaCtrl?.name ?? chara?.ToString();
+    //}
 
     /// <summary>
     /// Get a display name of the character. Only use in interface, not for keeping track of the character.
@@ -62,12 +62,12 @@ internal static class GameUtilities
         var fullname = param?.fullname;
         if (!string.IsNullOrEmpty(fullname))
         {
-            if (translated)
-            {
-                TranslationHelper.TryTranslate(fullname, out var translatedName);
-                if (!string.IsNullOrEmpty(translatedName))
-                    return translatedName;
-            }
+            //if (translated)
+            //{
+            //    TranslationHelper.TryTranslate(fullname, out var translatedName);
+            //    if (!string.IsNullOrEmpty(translatedName))
+            //        return translatedName;
+            //}
             return fullname;
         }
         return "";
