@@ -36,9 +36,7 @@ After minutes, the model will appear
 ---
 ## Issue
 
-If the model use some unreadable accessories added by mod, this plugin would not export them.You can modify the Python script to process those unity3d packs added by mod.
-
 A better T-Pose mod is needed
 
 ## Credits
-This plugin is based on [Illusion_ClothingStateMenu](https://github.com/ManlyMarco/Illusion_ClothingStateMenu) and [KKBP_Exporter](https://github.com/FlailingFog/KKBP_Exporter), plugin for blender is based on [KK-Blender-Porter-Pack](https://github.com/FlailingFog/KK-Blender-Porter-Pack)
+This plugin is based on [Illusion_ClothingStateMenu](https://github.com/ManlyMarco/Illusion_ClothingStateMenu) and [KKBP_Exporter](https://github.com/FlailingFog/KKBP_Exporter)
