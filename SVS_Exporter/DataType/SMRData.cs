@@ -23,7 +23,8 @@ internal class SMRData
 			CoordinateType = PmxBuilder.nowCoordinate;
 		}
 		SMRName = PmxBuilder.CleanUpName(smr.name);
-		SMRName = ((pmxBuilder.ignoreList.Contains(SMRName, StringComparer.Ordinal) && smr.sharedMaterials.Count() > 0 && pmxBuilder.ignoreList.Contains(PmxBuilder.CleanUpName(smr.sharedMaterial.name), StringComparer.Ordinal)) ? SMRName : (SMRName + " " + PmxBuilder.GetAltInstanceID(smr)));
+		//SMRName = ((pmxBuilder.ignoreList.Contains(SMRName, StringComparer.Ordinal) && smr.sharedMaterials.Count() > 0 && pmxBuilder.ignoreList.Contains(PmxBuilder.CleanUpName(smr.sharedMaterial.name), StringComparer.Ordinal)) ? SMRName : (SMRName + " " + PmxBuilder.GetAltInstanceID(smr)));
+		SMRName = ((pmxBuilder.ignoreList.Contains(SMRName, StringComparer.Ordinal)) ? SMRName : (SMRName + " " + PmxBuilder.GetAltInstanceID(smr)));
 		SMRPath = PmxBuilder.GetGameObjectPath(smr.gameObject);
 		for (int i = 0; i < smr.bones.Count(); i++)
 		{

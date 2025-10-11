@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using SVSExporter.Utils;
 using UnityEngine;
@@ -13,51 +14,58 @@ internal class MaterialInfo
 	public List<string> ShaderPropTextureValues = new List<string>();
 	public List<List<float>> ShaderPropColorValues = new List<List<float>>();
 	public List<float> ShaderPropFloatValues = new List<float>();
-	public List<string> ShaderPropUnhandled = new List<string>();
+	public List<List<float>> ShaderPropVectorValues = new List<List<float>>();
 
     public MaterialInfo(Material material, string _materialName)
 	{
 		MaterialName = _materialName;
 		ShaderName = material.shader.name;
-		var properties = material.GetTexturePropertyNames();
+		//var properties = material.GetTexturePropertyNames();
         isHair = material.shader.name.Contains("hair", System.StringComparison.OrdinalIgnoreCase);
 
-        foreach (string property in properties)
+		Shader shader = material.shader;
+		
+		for(int i = 0; i < shader.GetPropertyCount(); i++)
 		{
-			if (material.HasFloat(property))
+			string name = shader.GetPropertyName(i);
+			switch (shader.GetPropertyType(i))
 			{
-                ShaderPropNames.Add(property + " " + "Float" + "" + ShaderPropFloatValues.Count);
-				ShaderPropFloatValues.Add(material.GetFloat(property));
+				case UnityEngine.Rendering.ShaderPropertyType.Color:
+					ShaderPropNames.Add(name + " " + "Color" + ShaderPropColorValues.Count);
+					ShaderPropColorValues.Add(ConvertColor(material.GetColor(name)));
+					break;
+				case UnityEngine.Rendering.ShaderPropertyType.Range:
+				case UnityEngine.Rendering.ShaderPropertyType.Float:
+					ShaderPropNames.Add(name + " " + "Float" + ShaderPropFloatValues.Count);
+					ShaderPropFloatValues.Add(material.GetFloat(name));
+					break;
+				case UnityEngine.Rendering.ShaderPropertyType.Int:
+                    ShaderPropNames.Add(name + " " + "Float" + ShaderPropFloatValues.Count);
+                    ShaderPropFloatValues.Add(material.GetInt(name));
+					break;
+				case UnityEngine.Rendering.ShaderPropertyType.Texture:
+                    ShaderPropNames.Add(name + " " + "Texture" + " " + ShaderPropTextureValues.Count);
+                    Texture texture = material.GetTexture(name);
+					if (texture != null)
+					{
+                        ShaderPropTextureValues.Add(name);
+						TextureSaver.SaveTexture(texture, PmxBuilder.currentSavePath + MaterialName + name + ".png");
+                    }
+					else
+					{
+                        ShaderPropTextureValues.Add(null);
+                    }
+					break;
+				case UnityEngine.Rendering.ShaderPropertyType.Vector:
+					ShaderPropNames.Add(name + " " + "Vector" + " " + ShaderPropVectorValues.Count);
+					var vec = material.GetVector(name);
+					ShaderPropVectorValues.Add(new List<float>() { vec.x, vec.y, vec.z, vec.w});
+					break;
+				default:
+					Console.WriteLine("Ignored shader property: " + name);
+					break;
             }
-			else if (material.HasInt(property))
-			{
-                ShaderPropNames.Add(property + " " + "Float" + "" + ShaderPropFloatValues.Count);
-                ShaderPropFloatValues.Add(material.GetInt(property));
-            }
-			else if (material.HasTexture(property))
-			{
-                ShaderPropNames.Add(property + " " + "Texture" + " " + ShaderPropTextureValues.Count);
-                Texture texture = material.GetTexture(property);
-                if (texture == null)
-                {
-                    ShaderPropTextureValues.Add(null);
-                }
-                else
-                {
-                    ShaderPropTextureValues.Add(property);
-					TextureSaver.SaveTexture(texture, PmxBuilder.currentSavePath + MaterialName + "_" + property + ".png");
-                }
-            }
-            else if (material.HasColor(property))
-            {
-                ShaderPropNames.Add(property + " " + "Color" + " " + ShaderPropColorValues.Count);
-                ShaderPropColorValues.Add(ConvertColor(material.GetColor(property)));
-            }
-			else
-			{
-				ShaderPropUnhandled.Add(property);
-			}
-        }
+		}
 		//MaterialShader materialShader2 = MaterialShaders.materialShaders.Find((MaterialShader materialShader) => string.CompareOrdinal(materialShader.shaderName, ShaderName) == 0);
 		//if (materialShader2 == null)
 		//{
