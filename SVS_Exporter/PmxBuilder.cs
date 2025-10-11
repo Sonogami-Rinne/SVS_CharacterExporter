@@ -1,5 +1,6 @@
 using Character;
 using CharacterCreation;
+using ChartAndGraph;
 using Il2CppInterop.Runtime;
 using Il2CppSystem.Linq;
 using IllusionMods;
@@ -157,6 +158,32 @@ internal class PmxBuilder
 
     private string charaName;
 
+
+	public static void Test()
+	{
+        ChangeAnimations();
+
+        SkinnedMeshRenderer[] da = GameObject.Find("BodyTop").transform.GetComponentsInChildren<SkinnedMeshRenderer>();
+
+        MeshFilter[] daa = GameObject.Find("BodyTop").transform.GetComponentsInChildren<MeshFilter>();
+
+        Mesh mesh = new Mesh();
+		foreach(var i in da)
+		{
+			if (i.name.Contains("body"))
+			{
+				i.BakeMesh(mesh);
+			}
+		}
+
+		GameObject game = GameObject.Instantiate(daa[0].gameObject);
+		game.transform.parent = null;
+		game.transform.localPosition = UnityEngine.Vector3.zero;
+		game.transform.localRotation = UnityEngine.Quaternion.identity;
+		game.transform.localScale = UnityEngine.Vector3.one;
+
+		game.GetComponent<MeshFilter>().sharedMesh = mesh;
+    }
 	public IEnumerator BuildStart()
 	{
         Human human = SVSExporterPlugin.selectedChara;
@@ -164,8 +191,10 @@ internal class PmxBuilder
         this.charaName = human.fileParam.GetCharaName(false);
         CreateBaseSavePath();
         ChangeAnimations();
+		yield return new WaitForSeconds(0.4f);
         CollectIgnoreList();
         CreateCharacterInfoData();
+		yield return new WaitForSeconds(0.4f);
 		Prepare();
         nowCoordinate = exportAllOutfits ? 0 : human.fileStatus.coordinateType;
 		maxCoord = exportAllOutfits ? human.coorde.data.Coordinates.Length : nowCoordinate + 1;
@@ -175,12 +204,10 @@ internal class PmxBuilder
 			if (nowCoordinate < maxCoord)
 			{
 				human.coorde.ChangeCoordinateType((ChaFileDefine.CoordinateType)nowCoordinate);
-				human.ReloadCoordinate(Human.ReloadFlags.Coorde);
-                human.body.ResetDynamicBoneAll();
+				human.ReloadCoordinate(Human.ReloadFlags.Coorde);                
                 yield return new WaitForSeconds(0.2f);
 			}
             BuildStart_BG();
-            yield return new WaitForSeconds(0.2f);
         }
 		ExportAllDataLists();
 		CleanUp();
@@ -860,7 +887,7 @@ internal class PmxBuilder
             }
         }
     }
-    public void ChangeAnimations()
+    public static void ChangeAnimations()
 	{
 		Human human = SVSExporterPlugin.selectedChara;
 		HumanFace face = human.face;
