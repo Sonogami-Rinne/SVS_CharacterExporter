@@ -609,6 +609,10 @@ internal class PmxBuilder
                     {
                         material.SetTexture("_Cloth_alpha_bot", null);
                     }
+					if (material.HasProperty("_Highlight_texture"))
+					{
+						material.SetTexture("_Highlight_texture", null);
+					}
 
                     Color32[] lightColor;
                     Color32[] darkColor;
