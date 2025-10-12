@@ -205,7 +205,7 @@ internal class PmxBuilder
 			{
 				human.coorde.ChangeCoordinateType((ChaFileDefine.CoordinateType)nowCoordinate);
 				human.ReloadCoordinate(Human.ReloadFlags.Coorde);                
-                yield return new WaitForSeconds(0.2f);
+                yield return new WaitForSeconds(2f);
 			}
             BuildStart_BG();
         }
