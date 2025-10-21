@@ -161,31 +161,12 @@ internal class PmxBuilder
 
 	public static void Test()
 	{
-        ChangeAnimations();
-
-        SkinnedMeshRenderer[] da = GameObject.Find("BodyTop").transform.GetComponentsInChildren<SkinnedMeshRenderer>();
-
-        MeshFilter[] daa = GameObject.Find("BodyTop").transform.GetComponentsInChildren<MeshFilter>();
-
-        Mesh mesh = new Mesh();
-		foreach(var i in da)
-		{
-			if (i.name.Contains("body"))
-			{
-				i.BakeMesh(mesh);
-			}
-		}
-
-		GameObject game = GameObject.Instantiate(daa[0].gameObject);
-		game.transform.parent = null;
-		game.transform.localPosition = UnityEngine.Vector3.zero;
-		game.transform.localRotation = UnityEngine.Quaternion.identity;
-		game.transform.localScale = UnityEngine.Vector3.one;
-
-		game.GetComponent<MeshFilter>().sharedMesh = mesh;
+		//Shader shader = Shader.Find("Unlit/Texture");
+		//Console.WriteLine(shader.TryGetPropertyValue)
     }
 	public IEnumerator BuildStart()
 	{
+		TextureSaver.Init();
         Human human = SVSExporterPlugin.selectedChara;
 		//human.cloth.SetClothesState()
         this.charaName = human.fileParam.GetCharaName(false);
@@ -212,6 +193,7 @@ internal class PmxBuilder
 		ExportAllDataLists();
 		CleanUp();
 		OpenFolderInExplorer(savePath);
+		TextureSaver.Recycle();
 		Console.WriteLine("Finished");
 	}
 
@@ -412,6 +394,7 @@ internal class PmxBuilder
         UnityEngine.Vector3 lightPosition = new UnityEngine.Vector3(0.70f, 4.46f, 2.69f);
         UnityEngine.Vector3 darkPosition = new UnityEngine.Vector3(-0.17f, 4.40f, 2.84f);
 		Mesh square = gameObjectMeshContainer.GetComponent<MeshFilter>().sharedMesh;
+        Mesh mesh = new Mesh();
 
         for (int i = 0; i < meshRenders.Count; i++)
         {
@@ -433,17 +416,20 @@ internal class PmxBuilder
                 continue;
             }
             Console.WriteLine("Exporting textures for " + smr.name);
-			Mesh mesh = new Mesh();
+			Mesh originalMesh;
             LightProbeUsage probeUsage;
             Transform probeAnchor;
             ShadowCastingMode probeCastingMode;
             MaterialPropertyBlock materialPropertyBlock = new MaterialPropertyBlock();
             bool receiveShadow;
+			bool isSMR = false;
             
             if (smr.GetType().Name == "SkinnedMeshRenderer")
             {
                 var _tmp = (SkinnedMeshRenderer)smr;
-                _tmp.BakeMesh(mesh);
+				isSMR = true;
+				originalMesh = _tmp.sharedMesh;
+                //_tmp.BakeMesh(mesh);
                 //mesh.colors = _tmp.sharedMesh.colors;
                 probeUsage = _tmp.lightProbeUsage;
                 probeAnchor = _tmp.probeAnchor;
@@ -456,16 +442,7 @@ internal class PmxBuilder
 			{
 				MeshFilter meshFilter = smr.gameObject.GetComponent<MeshFilter>();
 				var _tmp = (MeshRenderer)smr;
-                meshCopier.sharedMesh = meshFilter.sharedMesh;
-                meshCopier.sharedMesh.UploadMeshData(false);
-                meshCopier.sharedMesh.MarkModified();
-                meshCopier.BakeMesh(mesh);
-                meshCopier.sharedMesh = null;
-				if (mesh.vertices.Count == 0)
-				{
-					Console.WriteLine("Could not get vertices, skip");
-					continue;
-                }
+				originalMesh = meshFilter.sharedMesh;
                 probeUsage = _tmp.lightProbeUsage;
 				probeAnchor = _tmp.probeAnchor;
 				probeCastingMode = _tmp.shadowCastingMode;
@@ -473,76 +450,15 @@ internal class PmxBuilder
 				_tmp.GetPropertyBlock(materialPropertyBlock);
 
 			}
-            int subMeshCount = mesh.subMeshCount;
-
-			//Processing mesh is unnecessary if we do not use it.But I am too lazy.
-			var uvs = mesh.uv;
-			if (uvs == null || uvs.Length == 0)
-			{
-                Console.WriteLine("No uv map, ignore");
-				continue;
-            }
-
-            int horizontalBlockCount = 1;
-            int verticalBlockCount = 1;
-            int xOffset;
-            int yOffset;
+            int subMeshCount = originalMesh.subMeshCount;
             int layer = smr.gameObject.layer;// Do not forget to drawmesh in this layer
-            UnityEngine.Vector3[] verts = new UnityEngine.Vector3[uvs.Length];
-            // Transform mesh into a surface according to its uv
-            float minX = float.PositiveInfinity;
-            float minY = float.PositiveInfinity;
-            float maxX = float.NegativeInfinity;
-            float maxY = float.NegativeInfinity;
-            for (int j = 0; j < uvs.Length; j++)
-            {
-                verts[j] = new UnityEngine.Vector3(-uvs[j].x, uvs[j].y, 0f);
-                minX = Mathf.Min(minX, uvs[j].x);
-                maxX = Mathf.Max(maxX, uvs[j].x);
-                minY = Mathf.Min(minY, uvs[j].y);
-                maxY = Mathf.Max(maxY, uvs[j].y);
-            }
 
-            xOffset = ((int)Math.Floor(minX));
-            yOffset = ((int)Math.Floor(minY));
-            horizontalBlockCount = (int)Math.Ceiling(maxX) - xOffset;
-            verticalBlockCount = (int)Math.Ceiling(maxY) - yOffset;
-
-			if (horizontalBlockCount == 0 || verticalBlockCount == 0)
-			{
-				horizontalBlockCount = 1;
-				verticalBlockCount = 1;
-				var v0 = verts[mesh.triangles[0]];
-				verts[mesh.triangles[1]].x = v0.x + 1;
-				verts[mesh.triangles[2]].y = v0.y + 1;
-			}
-
-            // Correct triangle if its normal direction is not positive z
-            var triangles = mesh.triangles;
-            for (int j = 0; j < triangles.Length; j += 3)
-            {
-                var v0 = verts[triangles[j]];
-                var v1 = verts[triangles[j + 1]];
-                var v2 = verts[triangles[j + 2]];
-
-                if (UnityEngine.Vector3.Cross(v1 - v0, v2 - v0).z < 0)
-                {
-                    var tmp = triangles[j + 1];
-                    triangles[j + 1] = triangles[j + 2];
-                    triangles[j + 2] = tmp;
-                }
-            }
-
-            uvIslandSolver(triangles, verts);
-
-            mesh.vertices = verts;
-            mesh.triangles = triangles;
-            mesh.RecalculateBounds();
-            mesh.RecalculateNormals();
-            mesh.RecalculateTangents();
-
-            var positionFront = new UnityEngine.Vector3(-xOffset - horizontalBlockCount / 2.0f, yOffset + verticalBlockCount / 2.0f, 10f);
-            var positionLookAt = new UnityEngine.Vector3(positionFront.x, positionFront.y, 0f);
+            int verticalBlockCount = 1;
+			int horizontalBlockCount = 1;
+			UnityEngine.Vector3 positionFront = new UnityEngine.Vector3();
+			UnityEngine.Vector3 positionLookAt = new UnityEngine.Vector3();
+			bool modifiedMesh = false;
+			
 
 			for (int j = 0; j < Math.Min(smr.sharedMaterials.Length, subMeshCount); j++)
             {
@@ -618,11 +534,114 @@ internal class PmxBuilder
                     Color32[] darkColor;
 					Color32[] lightOverlay = new Color32[0];
 					Color32[] darkOverlay = new Color32[0];
+					//Texture2D image = new Texture2D(baseLength, baseLength, TextureFormat.ARGB32, false);
+					Texture2D image;
+					bool customSize = false;
+					switch (baseLength)
+					{
+						case 512:
+							image = TextureSaver.GetTexture2D(0);
+							break;
+						case 1024:
+							image = TextureSaver.GetTexture2D(1);
+							break;
+						case 2048:
+							image = TextureSaver.GetTexture2D(2);
+							break;
+						case 4096:
+							image = TextureSaver.GetTexture2D(3);
+							break;
+						default:
+                            image = new Texture2D(baseLength, baseLength, TextureFormat.ARGB32, false);
+							customSize = true;
+							break;
+                    }
 
 					bool isMultiTexShaders = multiTexShaders.Contains(material.shader.name);
 
                     if (isMultiTexShaders)
 					{
+						if (!modifiedMesh)
+						{
+							modifiedMesh = true;
+							if (isSMR)
+							{
+                                var _tmp = (SkinnedMeshRenderer)smr;
+								_tmp.BakeMesh(mesh);
+                            }
+							else
+							{
+								Mesh.DestroyImmediate(mesh);
+								mesh = Mesh.Instantiate(smr.gameObject.GetComponent<MeshFilter>().sharedMesh);
+							}
+
+							var uvs = mesh.uv;
+                            if (uvs == null || uvs.Length == 0)
+                            {
+                                Console.WriteLine("No uv map, ignore");
+                                continue;
+                            }
+
+                            int xOffset;
+                            int yOffset;
+                            
+                            UnityEngine.Vector3[] verts = new UnityEngine.Vector3[uvs.Length];
+                            // Transform mesh into a surface according to its uv
+                            float minX = float.PositiveInfinity;
+                            float minY = float.PositiveInfinity;
+                            float maxX = float.NegativeInfinity;
+                            float maxY = float.NegativeInfinity;
+                            for (int uv = 0; uv < uvs.Length; uv++)
+                            {
+                                verts[uv] = new UnityEngine.Vector3(-uvs[uv].x, uvs[uv].y, 0f);
+                                minX = Mathf.Min(minX, uvs[uv].x);
+                                maxX = Mathf.Max(maxX, uvs[uv].x);
+                                minY = Mathf.Min(minY, uvs[uv].y);
+                                maxY = Mathf.Max(maxY, uvs[uv].y);
+                            }
+
+                            xOffset = ((int)Math.Floor(minX));
+                            yOffset = ((int)Math.Floor(minY));
+                            horizontalBlockCount = (int)Math.Ceiling(maxX) - xOffset;
+                            verticalBlockCount = (int)Math.Ceiling(maxY) - yOffset;
+
+                            if (horizontalBlockCount == 0 || verticalBlockCount == 0)
+                            {
+                                horizontalBlockCount = 1;
+                                verticalBlockCount = 1;
+                                var v0 = verts[mesh.triangles[0]];
+                                verts[mesh.triangles[1]].x = v0.x + 1;
+                                verts[mesh.triangles[2]].y = v0.y + 1;
+                            }
+
+                            // Correct triangle if its normal direction is not positive z
+                            var triangles = mesh.triangles;
+                            for (int tri = 0; tri < triangles.Length; tri += 3)
+                            {
+                                var v0 = verts[triangles[tri]];
+                                var v1 = verts[triangles[tri + 1]];
+                                var v2 = verts[triangles[tri + 2]];
+
+                                if (UnityEngine.Vector3.Cross(v1 - v0, v2 - v0).z < 0)
+                                {
+                                    var tmp = triangles[tri + 1];
+                                    triangles[tri + 1] = triangles[tri + 2];
+                                    triangles[tri + 2] = tmp;
+                                }
+                            }
+
+                            uvIslandSolver(triangles, verts);
+
+                            mesh.vertices = verts;
+                            mesh.triangles = triangles;
+                            mesh.RecalculateBounds();
+                            mesh.RecalculateNormals();
+                            mesh.RecalculateTangents();
+
+                            positionFront = new UnityEngine.Vector3(-xOffset - horizontalBlockCount / 2.0f, yOffset + verticalBlockCount / 2.0f, 10f);
+                            positionLookAt = new UnityEngine.Vector3(positionFront.x, positionFront.y, 0f);
+                        }
+
 						camera.orthographicSize = verticalBlockCount / 2.0f;
 						camera.aspect = (float)horizontalBlockCount / verticalBlockCount;
 						camera.transform.position = positionFront;
@@ -635,8 +654,43 @@ internal class PmxBuilder
                         int texturewidth = baseLength * horizontalBlockCount;
                         int textureheight = baseLength * verticalBlockCount;
 
-                        lightOverlay = render(lightRotation, lightPosition, j, mesh, texturewidth, textureheight);
-                        darkOverlay = render(darkRotation, lightPosition, j, mesh, texturewidth, textureheight);
+						Texture2D _overlay;
+						bool overlayCustomSize = false;
+						if(texturewidth == textureheight)
+						{
+							switch (texturewidth)
+							{
+								case 512:
+									_overlay = TextureSaver.GetTexture2D(0);
+									break;
+                                case 1024:
+                                    _overlay = TextureSaver.GetTexture2D(1);
+                                    break;
+                                case 2048:
+                                    _overlay = TextureSaver.GetTexture2D(2);
+                                    break;
+                                case 4096:
+                                    _overlay = TextureSaver.GetTexture2D(3);
+                                    break;
+								default:
+                                    _overlay = new Texture2D(texturewidth, textureheight, TextureFormat.ARGB32, false);
+                                    overlayCustomSize = true;
+									break;
+                            }
+						}
+						else
+						{
+                            _overlay = new Texture2D(texturewidth, textureheight, TextureFormat.ARGB32, false);
+                            overlayCustomSize = true;
+                        }
+
+						lightOverlay = render(lightRotation, lightPosition, j, mesh, texturewidth, textureheight, _overlay);
+                        darkOverlay = render(darkRotation, lightPosition, j, mesh, texturewidth, textureheight, _overlay);
+
+						if (overlayCustomSize)
+						{
+                            Texture2D.DestroyImmediate(_overlay);
+                        }
 
                         lightOverlay = shrink(lightOverlay);
                         darkOverlay = shrink(darkOverlay);
@@ -668,8 +722,8 @@ internal class PmxBuilder
 					camera.transform.hasChanged = true;
 					cameraMain.transform.hasChanged = true;
 
-                    lightColor = render(lightRotation, lightPosition, 0, square, baseLength, baseLength);
-                    darkColor = render(darkRotation, darkPosition, 0, square, baseLength, baseLength);
+                    lightColor = render(lightRotation, lightPosition, 0, square, baseLength, baseLength, image);
+                    darkColor = render(darkRotation, darkPosition, 0, square, baseLength, baseLength, image);
 
 					if (isMultiTexShaders)
 					{
@@ -679,12 +733,15 @@ internal class PmxBuilder
 
                     TextureSaver.SaveTexture(lightColor, baseLength, baseLength, currentSavePath + "/pre_light/" + matName + "_light.png");
                     TextureSaver.SaveTexture(darkColor, baseLength, baseLength, currentSavePath + "/pre_dark/" + matName + "_dark.png");
-
-                    Color32[] render(UnityEngine.Quaternion rotation, UnityEngine.Vector3 position, int subMeshIndex, Mesh mesh, int texturewidth, int textureheight)
+					if (customSize)
+					{
+                        Texture2D.DestroyImmediate(image);
+                    }
+                    Color32[] render(UnityEngine.Quaternion rotation, UnityEngine.Vector3 position, int subMeshIndex, Mesh mesh, int texturewidth, int textureheight, Texture2D _)
                     {
                         light.transform.rotation = rotation;
                         light.transform.position = position;
-                        GL.Flush();
+                        //GL.Flush();
 
                         RenderTexture renderTexture = new RenderTexture(texturewidth, textureheight, 24, RenderTextureFormat.ARGB32);
                         renderTexture.antiAliasing = 1;
@@ -697,12 +754,10 @@ internal class PmxBuilder
                         camera.Render();
 
                         RenderTexture.active = renderTexture;
-                        Texture2D _ = new Texture2D(texturewidth, textureheight, TextureFormat.ARGB32, false);
                         _.ReadPixels(new Rect(0, 0, texturewidth, textureheight), 0, 0);
                         _.Apply();
                         RenderTexture.active = null;
                         var data = _.GetPixels32();
-                        Texture.Destroy(_);
                         camera.targetTexture = null;
                         renderTexture.Release();
                         return data;
@@ -782,15 +837,17 @@ internal class PmxBuilder
                     }
                 }
             }
-            if (mesh != null)
-            {
-                Mesh.DestroyImmediate(mesh);
-            }
+            
         }
         
 		GameObject.Find("BodyTop").transform.Translate(new UnityEngine.Vector3(0, -10, 0));
-        
-		void uvIslandSolver(int[] triangles, UnityEngine.Vector3[] vertices)
+
+        if (mesh != null)
+        {
+            Mesh.DestroyImmediate(mesh);
+        }
+
+        void uvIslandSolver(int[] triangles, UnityEngine.Vector3[] vertices)
         {
             int[] parent = new int[vertices.Length];
             float[] minX = new float[vertices.Length];
@@ -1017,7 +1074,8 @@ internal class PmxBuilder
 		//	"o_hit_siriL", "o_hit_siriR", "cf_O_face_atari"
 		//};
 		SkinnedMeshRenderer[] componentsInChildren = GameObject.Find("BodyTop").transform.GetComponentsInChildren<SkinnedMeshRenderer>(includeInactive:true);
-		int total = 0;
+        Mesh mesh = new Mesh();
+        int total = 0;
 		for (int i = 0; i < componentsInChildren.Length; i++)
 		{
 			if (
@@ -1064,7 +1122,7 @@ internal class PmxBuilder
 				currentRendererMaterialMapping.Add(componentsInChildren[i], sMRData.SMRMaterialNames);
 			}
 
-			Mesh mesh = new Mesh();
+			
             componentsInChildren[i].BakeMesh(mesh);
 
 			if (nowCoordinate == maxCoord)
@@ -1135,8 +1193,8 @@ internal class PmxBuilder
 				pmxVertex.Deform = PmxVertex.DeformType.BDEF4;
 				pmxFile.VertexList.Add(pmxVertex);
 			}
-            Mesh.DestroyImmediate(mesh);
         }
+		Mesh.DestroyImmediate(mesh);
 	}
 
     private PmxVertex.BoneWeight[] ConvertBoneWeight(BoneWeight unityWeight, Transform[] bones)
@@ -1402,9 +1460,8 @@ internal class PmxBuilder
 	{
 		MeshFilter[] componentsInChildren = GameObject.Find("BodyTop").transform.GetComponentsInChildren<MeshFilter>(includeInactive: true);
 		
-		SkinnedMeshRenderer meshCopier = gameObjectMeshCopier.GetComponent<SkinnedMeshRenderer>();
-
-		int index = 0;
+		//SkinnedMeshRenderer meshCopier = gameObjectMeshCopier.GetComponent<SkinnedMeshRenderer>();
+  //      Mesh mesh = new Mesh();
 
         for (int i = 0; i < componentsInChildren.Length; i++)
 		{
@@ -1454,15 +1511,10 @@ internal class PmxBuilder
             Transform transform = componentsInChildren[i].gameObject.transform;
             int bone = sbi(GetAltBoneName(transform), transform.GetInstanceID().ToString());
 
-			Mesh mesh = new Mesh();
-
-            meshCopier.sharedMesh = componentsInChildren[i].mesh;
-            meshCopier.BakeMesh(mesh);
-            meshCopier.sharedMesh = null;
-
-			if(mesh.vertexCount == 0)
+			Mesh mesh = componentsInChildren[i].sharedMesh;
+			if (!mesh.isReadable)
 			{
-				Console.WriteLine("Could not export this mesh, ignore");
+				Console.WriteLine("Error, unreadable mesh detected.Did you run that script?");
 				continue;
 			}
 
@@ -1513,10 +1565,10 @@ internal class PmxBuilder
                 pmxFile.VertexList.Add(pmxVertex);
             }
             //ExportLightTexture(mesh, meshRenderer.materials, sMRData.SMRName, meshRenderer, sMRData.SMRMaterialNames);
-            Mesh.DestroyImmediate(mesh);
+            
         }
-
-	}
+        //Mesh.DestroyImmediate(mesh);
+    }
 
     public void CreateBoneList()
 	{

@@ -1,19 +1,54 @@
-﻿using ADV.Commands.Camera;
-using LibCpp2IL.Logging;
-using System;
+﻿using System;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
 using UnityEngine;
 
+
 namespace SVSExporter.Utils
 {
     static class TextureSaver
     {
+        private static GameObject textureCarrier;
+
+        private static MeshRenderer carrier;
+        public static void Init()
+        {
+            //Prevent from being recycled by game;
+            textureCarrier = new GameObject("textureCarrier");
+            carrier = textureCarrier.AddComponent<MeshRenderer>();
+            Material mat = new Material(Shader.Find("Unlit/Texture"));
+            Material mat1 = new Material(Shader.Find("Unlit/Texture"));
+            Material mat2 = new Material(Shader.Find("Unlit/Texture"));
+            Material mat3 = new Material(Shader.Find("Unlit/Texture"));
+
+            Texture2D imageHK = new Texture2D(512, 512, TextureFormat.ARGB32, false);
+            Texture2D image1K = new Texture2D(1024, 1024, TextureFormat.ARGB32, false);
+            Texture2D image2K = new Texture2D(2048, 2048, TextureFormat.ARGB32, false);
+            Texture2D image4K = new Texture2D(4096, 4096, TextureFormat.ARGB32, false);
+            mat.SetTexture("_MainTex", imageHK);
+            mat1.SetTexture("_MainTex", image1K);
+            mat2.SetTexture("_MainTex", image2K);
+            mat3.SetTexture("_MainTex", image4K);
+            Material[] _mat = new Material[] { mat, mat1, mat2, mat3 };
+            Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppReferenceArray<Material> materials = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppReferenceArray<Material>(_mat);
+            carrier.sharedMaterials = materials;
+        }
+        public static void Recycle()
+        {
+            carrier = null;
+            GameObject.Destroy(textureCarrier);
+        }
+        public static Texture2D GetTexture2D(int size)
+        {
+            var mat = carrier.sharedMaterials[size];
+            return (mat.GetTexture("_MainTex")).TryCast<Texture2D>();
+        }
+
+        
         public static void SaveTexture(Color32[] colors, int textureWidth, int textureHeight, string path)
         {
             PngWriter.SaveRgbaToPng(colors, textureWidth, textureHeight, path);
-
         }
         public static void SaveTexture(Texture2D texture, string path)
         {
@@ -27,16 +62,47 @@ namespace SVSExporter.Utils
             RenderTexture.active = temporary;
             GL.Clear(clearDepth: false, clearColor: true, new Color(0f, 0f, 0f, 0f));
             Graphics.Blit(texture, temporary);
-            Texture2D texture2D = new Texture2D(temporary.width, temporary.height);
+            //Texture2D texture2D = new Texture2D(temporary.width, temporary.height);
+            Texture2D texture2D;
+            bool customSize = false;
+            if (texture.width == texture.height)
+            {
+                switch (texture.width)
+                {
+                    case 512:
+                        texture2D = TextureSaver.GetTexture2D(0);
+                        break;
+                    case 1024:
+                        texture2D = TextureSaver.GetTexture2D(1);
+                        break;
+                    case 2048:
+                        texture2D = TextureSaver.GetTexture2D(2);
+                        break;
+                    case 4096:
+                        texture2D = TextureSaver.GetTexture2D(3);
+                        break;
+                    default:
+                        texture2D = new Texture2D(texture.width, texture.height, TextureFormat.ARGB32, false);
+                        customSize = true;
+                        break;
+                }
+            }
+            else
+            {
+                texture2D = new Texture2D(texture.width, texture.height, TextureFormat.ARGB32, false);
+                customSize = true;
+            }
+            
             texture2D.ReadPixels(new Rect(0f, 0f, texture2D.width, texture2D.height), 0, 0);
+            texture2D.Apply();
             RenderTexture.active = active;
             RenderTexture.ReleaseTemporary(temporary);
             var a = texture2D.GetPixels32();
             PngWriter.SaveRgbaToPng(a, texture2D.width, texture2D.height, path);
-            UnityEngine.Object.Destroy(texture2D);
-            //var a = texture2D.GetPixels32();
-            //PngWriter.SaveRgbaToPng(a, texture2D.width, texture2D.height, path);
-            //UnityEngine.Object.Destroy(texture2D);
+            if (customSize)
+            {
+                UnityEngine.Object.DestroyImmediate(texture2D);
+            }
         }
     }
     static class PngWriter
