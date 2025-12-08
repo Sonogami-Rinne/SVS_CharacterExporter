@@ -460,8 +460,9 @@ internal class PmxBuilder
 			bool modifiedMesh = false;
 			
 
-			for (int j = 0; j < Math.Min(smr.sharedMaterials.Length, subMeshCount); j++)
+			for (int j = 0; j < smr.sharedMaterials.Length; j++)
             {
+				int submeshIndex = Math.Min(j, subMeshCount);
                 if (meshRenders[i].sharedMaterials[j] == null || ignoredShaders.Contains(meshRenders[i].sharedMaterials[j].shader.name)) continue;
                 Material material = new Material(meshRenders[i].sharedMaterials[j]);
 
@@ -684,8 +685,8 @@ internal class PmxBuilder
                             overlayCustomSize = true;
                         }
 
-						lightOverlay = render(lightRotation, lightPosition, j, mesh, texturewidth, textureheight, _overlay);
-                        darkOverlay = render(darkRotation, lightPosition, j, mesh, texturewidth, textureheight, _overlay);
+						lightOverlay = render(lightRotation, lightPosition, submeshIndex, mesh, texturewidth, textureheight, _overlay);
+                        darkOverlay = render(darkRotation, lightPosition, submeshIndex, mesh, texturewidth, textureheight, _overlay);
 
 						if (overlayCustomSize)
 						{
