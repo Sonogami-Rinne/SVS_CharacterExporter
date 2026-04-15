@@ -102,27 +102,11 @@ internal class PmxBuilder
 
 	private List<TextureData> textureData = new List<TextureData>();
 
-	//private List<MaterialData> materialData = new List<MaterialData>();
-
-	//private List<ReferenceInfoData> referenceInfoData = new List<ReferenceInfoData>();
-
-	//private List<ChaFileData> chaFileCustomFaceData = new List<ChaFileData>();
-
-	//private List<ChaFileData> chaFileCustomBodyData = new List<ChaFileData>();
-
-	//private List<ChaFileData> chaFileCustomHairData = new List<ChaFileData>();
-
 	private List<CharacterInfoData> characterInfoData = new List<CharacterInfoData>();
-
-	//private List<ChaFileCoordinateData> chaFileCoordinateData = new List<ChaFileCoordinateData>();
 
 	private List<DynamicBoneData> dynamicBonesData = new List<DynamicBoneData>();
 
 	private List<DynamicBoneColliderData> dynamicBoneCollidersData = new List<DynamicBoneColliderData>();
-
-	//private List<AccessoryStateData> accessoryStateData = new List<AccessoryStateData>();
-
-	//private List<ListInfoData> listInfoData = new List<ListInfoData>();
 
 	private List<BoneOffsetData> boneOffsetData = new List<BoneOffsetData>();
 
@@ -159,16 +143,10 @@ internal class PmxBuilder
     private string charaName;
 
 
-	public static void Test()
-	{
-		//Shader shader = Shader.Find("Unlit/Texture");
-		//Console.WriteLine(shader.TryGetPropertyValue)
-    }
 	public IEnumerator BuildStart()
 	{
 		TextureSaver.Init();
         Human human = SVSExporterPlugin.selectedChara;
-		//human.cloth.SetClothesState()
         this.charaName = human.fileParam.GetCharaName(false);
         CreateBaseSavePath();
         ChangeAnimations();
