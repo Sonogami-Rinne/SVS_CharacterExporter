@@ -5,9 +5,6 @@ A BepInEx plugin for Summer Vacation Scramble to export characters to PMX.This p
 
 Put the .dll to plugin folder
 
-Put the process.exe to folder "abdata\chara\" and run it. ([About this](https://github.com/Sonogami-Rinne/SVS_CharacterExporter/tree/master/SVS_Exporter/PythonScript))
-<img width="805" height="747" alt="屏幕截图 2025-10-06 170232" src="https://github.com/user-attachments/assets/fd92443b-e43f-4db1-94b5-1fc9cdbf2628" />
-
 ---
 
 Press Ctrl + Tab in the character maker, then a menu will appear
@@ -22,7 +19,7 @@ Click the Export button, a folder will pop up after a few minutes. (This takes l
 
 ---
 
-Then Install the plugin for blender(modified from (https://github.com/FlailingFog/KK-Blender-Porter-Pack)) to import the model.pmx in the folder (not the one in outfit folder)
+Then Install the plugin for blender(modified from ([https://github.com/FlailingFog/KK-Blender-Porter-Pack](https://gitgoon.dev/kkbp-dev/KKBP_Importer)) to import the model.pmx in the folder (not the one in outfit folder)
 
 <img width="527" height="571" alt="屏幕截图 2025-09-21 164546" src="https://github.com/user-attachments/assets/71ab8fdd-6c01-48e0-b357-adaffba1df3a" />
 
