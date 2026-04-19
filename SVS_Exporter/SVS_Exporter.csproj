@@ -5,6 +5,8 @@
 		<OutputType>Library</OutputType>
 
 		<DefineConstants>$(DefineConstants);SVS</DefineConstants>
+
+		<BaseOutputPath>E:\desktop1\work\Summer Vacation\BepInEx\plugins\SVSExporter</BaseOutputPath>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -27,6 +29,9 @@
 		  <IncludeAssets>compile</IncludeAssets>
 		  <PrivateAssets>all</PrivateAssets>
 		</PackageReference>
+		
 	</ItemGroup>
-
+	<ItemGroup>
+		<EmbeddedResource Include="Assets\meshexporter.unity3d" />
+	</ItemGroup>
 </Project>
