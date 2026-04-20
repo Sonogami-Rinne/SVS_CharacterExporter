@@ -4,6 +4,8 @@ using System.Collections.Generic;
 [Serializable]
 internal class CharacterInfoData
 {
+	public string Name;
+
 	public int Personality;
 
 	public float VoiceRate;

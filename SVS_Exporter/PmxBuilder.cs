@@ -1853,9 +1853,10 @@ internal class PmxBuilder
 		var eyeMatControllerl = face.eyeLookMatCtrl[0]._eyeLR == ILLGames.Unity.Animations.EYE_LR.EYE_L ? face.eyeLookMatCtrl[0] : face.eyeLookMatCtrl[1];
 		var eyeMatControllerr = face.eyeLookMatCtrl[0]._eyeLR == ILLGames.Unity.Animations.EYE_LR.EYE_R ? face.eyeLookMatCtrl[0] : face.eyeLookMatCtrl[1];
 
-		CharacterInfoData item4 = new CharacterInfoData
+        CharacterInfoData item4 = new CharacterInfoData
 		{
-			Personality = human.fileParam.personality,
+			Name = human.fileParam.GetCharaName(false),
+            Personality = human.fileParam.personality,
 			VoiceRate = human.fileParam.voiceRate,
 			PupilWidth = human.fileFace.pupilWidth,
 			PupilHeight = human.fileFace.pupilHeight,
