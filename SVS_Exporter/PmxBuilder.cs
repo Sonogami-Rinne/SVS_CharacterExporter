@@ -34,36 +34,6 @@ internal class PmxBuilder
 		"cf_Ohitomi_L02", "cf_Ohitomi_R02", "cf_O_gag_eye_00", "cf_O_gag_eye_01", "cf_O_gag_eye_02", "o_tang", "cf_O_face_atari", "o_tango", "o_nail_def01", "o_nail_foot"
     };
 
-	//public static readonly Dictionary<string, string> typeMap = new Dictionary<string, string>
-	//{
-	//	{ "_MT_CT", "_MainTex_ColorTexture" },
-	//	{ "_MT", "_MainTex" },
-	//	{ "_AM", "_AlphaMask" },
-	//	{ "_CM", "_ColorMask" },
-	//	{ "_DM", "_DetailMask" },
-	//	{ "_LM", "_LineMask" },
-	//	{ "_NM", "_NormalMask" },
-	//	{ "_NMP", "_NormalMap" },
-	//	{ "_NMPD", "_NormalMapDetail" },
-	//	{ "_ot1", "_overtex1" },
-	//	{ "_ot2", "_overtex2" },
-	//	{ "_ot3", "_overtex3" },
-	//	{ "_lqdm", "_liquidmask" },
-	//	{ "_HGLS", "_HairGloss" },
-	//	{ "_T2", "_Texture2" },
-	//	{ "_T3", "_Texture3" },
-	//	{ "_T4", "_Texture4" },
-	//	{ "_T5", "_Texture5" },
-	//	{ "_T6", "_Texture6" },
-	//	{ "_T7", "_Texture7" },
-	//	{ "_PM1", "_PatternMask1" },
-	//	{ "_PM2", "_PatternMask2" },
-	//	{ "_PM3", "_PatternMask3" },
-	//	{ "_AR", "_AnotherRamp" },
-	//	{ "_GLSR", "_GlassRamp" },
-	//	{ "_EXPR", "_expression" }
-	//};
-
 	public string EyeMatName = "cf_m_hitomi_00";
 
 	public HashSet<string> whitelistOffsetBones = new HashSet<string>
@@ -139,24 +109,6 @@ internal class PmxBuilder
 	private GameObject gameObjectMeshContainer;// Carrier of square mesh which is used to export light textures
 
     private string charaName;
-
-	public static void Test()
-	{
-        var assembly = Assembly.GetExecutingAssembly();
-        using (Stream stream = assembly.GetManifestResourceStream("SVSExporter.Assets.meshexporter.unity3d"))
-        {
-            byte[] data = new byte[stream.Length];
-            stream.Read(data, 0, data.Length);
-            AssetBundle bundle = AssetBundle.LoadFromMemory(data);
-			Shader shader;
-            foreach (var i in bundle.LoadAllAssets())
-			{
-				Console.WriteLine(i.name + " " + i.GetType().Name);
-				shader = i.TryCast<Shader>();
-				Console.WriteLine(shader != null);
-            }
-        }
-    }
 
     public IEnumerator BuildStart()
 	{
@@ -244,7 +196,7 @@ internal class PmxBuilder
         gameObjectMeshCopier = new GameObject("MeshCopier");
         var smr = gameObjectMeshCopier.AddComponent<SkinnedMeshRenderer>();
 
-        GameObject.Find("Cvs_BackGround").GetComponent<Canvas>().enabled = false;
+		GameObject.Find("Cvs_BackGround").GetComponent<Canvas>().enabled = false;
         Camera camera = gameObjectMeshCopier.AddComponent<Camera>();
 		GameObject light = Light.FindObjectsOfType<Light>()[0].gameObject;
 
@@ -312,6 +264,7 @@ internal class PmxBuilder
                 shader = i.TryCast<Shader>();
                 smr.material = new Material(shader);
             }
+			bundle.Unload(false);
         }
 
         //human.body.LoadAnimation("custom/00.unity3d", "tpose");
@@ -1182,8 +1135,8 @@ internal class PmxBuilder
 				}
 				UnityEngine.Vector3 vector = componentsInChildren[i].transform.TransformDirection(normals[l]);
 				pmxVertex.Normal = new PmxLib.Vector3(0f - vector.x, vector.y, 0f - vector.z);
-                //UnityEngine.Vector3 vector2 = componentsInChildren[i].transform.TransformPointUnscaled(vertices[l]);
-                UnityEngine.Vector3 vector2 = componentsInChildren[i].transform.TransformPoint(vertices[l]);
+                UnityEngine.Vector3 vector2 = componentsInChildren[i].transform.TransformPointUnscaled(vertices[l]);
+                //UnityEngine.Vector3 vector2 = componentsInChildren[i].transform.TransformPoint(vertices[l]);
                 pmxVertex.Position = new PmxLib.Vector3((0f - vector2.x) * (float)scale, vector2.y * (float)scale, (0f - vector2.z) * (float)scale);
 				pmxVertex.Deform = PmxVertex.DeformType.BDEF4;
 				pmxFile.VertexList.Add(pmxVertex);
