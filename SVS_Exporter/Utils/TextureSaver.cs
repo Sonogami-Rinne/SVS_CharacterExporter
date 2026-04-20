@@ -44,8 +44,6 @@ namespace SVSExporter.Utils
             var mat = carrier.sharedMaterials[size];
             return (mat.GetTexture("_MainTex")).TryCast<Texture2D>();
         }
-
-        
         public static void SaveTexture(Color32[] colors, int textureWidth, int textureHeight, string path)
         {
             PngWriter.SaveRgbaToPng(colors, textureWidth, textureHeight, path);
@@ -55,16 +53,15 @@ namespace SVSExporter.Utils
             var a = texture.GetPixels32();
             PngWriter.SaveRgbaToPng(a, texture.width, texture.height, path);
         }
-        public static void SaveTexture(Texture texture, string path)
+        public static Texture2D GetTexture2D(Texture texture, ref bool customSize)
         {
             RenderTexture temporary = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
             RenderTexture active = RenderTexture.active;
             RenderTexture.active = temporary;
             GL.Clear(clearDepth: false, clearColor: true, new Color(0f, 0f, 0f, 0f));
             Graphics.Blit(texture, temporary);
-            //Texture2D texture2D = new Texture2D(temporary.width, temporary.height);
             Texture2D texture2D;
-            bool customSize = false;
+            customSize = false;
             if (texture.width == texture.height)
             {
                 switch (texture.width)
@@ -92,11 +89,16 @@ namespace SVSExporter.Utils
                 texture2D = new Texture2D(texture.width, texture.height, TextureFormat.ARGB32, false);
                 customSize = true;
             }
-            
             texture2D.ReadPixels(new Rect(0f, 0f, texture2D.width, texture2D.height), 0, 0);
             texture2D.Apply();
             RenderTexture.active = active;
             RenderTexture.ReleaseTemporary(temporary);
+            return texture2D;
+        }
+        public static void SaveTexture(Texture texture, string path)
+        {
+            bool customSize = false;
+            Texture2D texture2D = GetTexture2D(texture, ref customSize);
             var a = texture2D.GetPixels32();
             PngWriter.SaveRgbaToPng(a, texture2D.width, texture2D.height, path);
             if (customSize)

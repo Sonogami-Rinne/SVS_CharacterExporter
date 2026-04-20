@@ -223,7 +223,7 @@ namespace SVSExporter
             _windowRect = new Rect(x: _windowRect.x != 0 ? _windowRect.x : Screen.width / 2 - 20,
                                    y: _windowRect.y != 0 ? _windowRect.y : 20,
                                    width: WindowWidth,
-                                   height: 50);
+                                   height: 100);
 
             _buttons.Add(new ActionButton("Export", () =>
             {
@@ -238,6 +238,13 @@ namespace SVSExporter
                 _pmxBuilder.exportAllOutfits = true;
                 component.StartCoroutine(_pmxBuilder.BuildStart().WrapToIl2Cpp());
 
+            }));
+            _buttons.Add(new ActionButton("ExportWithMainCamera", () =>
+            {
+                _pmxBuilder = new PmxBuilder();
+                _pmxBuilder.exportWithMainCamera = true;
+                component.StartCoroutine(_pmxBuilder.BuildStart().WrapToIl2Cpp());
+            
             }));
         }
     }
