@@ -205,11 +205,12 @@ internal class PmxBuilder
         recoverInfos.Clear();
         recoverInfos.Add(light.transform.rotation);
         recoverInfos.Add(light.transform.position);
+        recoverInfos.Add(Camera.main.transform.position);
+        recoverInfos.Add(Camera.main.transform.rotation);
         if (this.exportWithMainCamera)
 		{
 			camera = Camera.main;
-            recoverInfos.Add(camera.transform.position);
-            recoverInfos.Add(camera.transform.rotation);
+            
 			recoverInfos.Add(camera.clearFlags);
 			recoverInfos.Add(camera.allowHDR);
 			recoverInfos.Add(camera.allowMSAA);
