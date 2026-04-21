@@ -559,6 +559,14 @@ internal class PmxBuilder
                     if (isMultiTexShaders)
 					{
 						renderWithModifiedMesh(ref lightOverlay, ref darkOverlay, camera);
+                        if (this.exportWithMainCamera)
+                        {
+                            Color32[] alphaOverlay = new Color32[0];
+                            Color32[] _ = null;
+                            renderWithModifiedMesh(ref alphaOverlay, ref _, auxiliaryCamera);
+                            lightOverlay = addAlpha(lightOverlay, alphaOverlay);
+                            darkOverlay = addAlpha(darkOverlay, alphaOverlay);
+                        }
                     }
 
                     camera.orthographicSize = 0.5f;
@@ -578,14 +586,6 @@ internal class PmxBuilder
 						blend(lightColor, lightOverlay);
 						blend(darkColor, darkOverlay);
 					}
-					if (this.exportWithMainCamera)
-					{
-						Color32[] alphaOverlay = new Color32[0];
-						Color32[] _ = null;
-						renderWithModifiedMesh(ref alphaOverlay,ref  _, auxiliaryCamera);
-						lightColor = addAlpha(lightColor, alphaOverlay);
-						darkColor = addAlpha(darkColor, alphaOverlay);
-                    }
 
                     TextureSaver.SaveTexture(lightColor, baseLength, baseLength, currentSavePath + "/pre_light/" + matName + "_light.png");
                     TextureSaver.SaveTexture(darkColor, baseLength, baseLength, currentSavePath + "/pre_dark/" + matName + "_dark.png");
