@@ -31,7 +31,7 @@ internal class PmxBuilder
 		"cf_m_eyeline_kage", "cf_m_eyeline_down", "cf_m_sirome_00", "cf_m_hitomi_00", "cf_m_tang", "cf_m_namida_00", "cf_m_gageye_00", "cf_m_gageye_01", "cf_m_gageye_02",
 		"cf_O_face_atari_M", "Highlight_cm_O_face_rend", "cm_m_body", "Highlight_o_body_a_rend", "Highlight_cf_O_face_rend", "o_shadowcaster", "o_body", "cf_O_face", "cf_O_tooth",
 		"cf_O_canine", "cf_O_mayuge", "cf_O_noseline", "cf_O_eyeline", "cf_O_eyeline_low", "cf_O_namida_L", "cf_O_namida_M", "cf_O_namida_S", "cf_Ohitomi_L", "cf_Ohitomi_R",
-		"cf_Ohitomi_L02", "cf_Ohitomi_R02", "cf_O_gag_eye_00", "cf_O_gag_eye_01", "cf_O_gag_eye_02", "o_tang", "cf_O_face_atari", "o_tango", "o_nail_def01", "o_nail_foot"
+		"cf_Ohitomi_L02", "cf_Ohitomi_R02", "cf_O_gag_eye_00", "cf_O_gag_eye_01", "cf_O_gag_eye_02", "o_tang", "cf_O_face_atari", "o_tango", "o_nail_def01", "o_nail_foot", "cf_m_body_0", "cf_m_head_00"
     };
 
 	public string EyeMatName = "cf_m_hitomi_00";
