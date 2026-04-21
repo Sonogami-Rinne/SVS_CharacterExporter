@@ -580,8 +580,13 @@ internal class PmxBuilder
 
                     lightColor = render(lightRotation, lightPosition, 0, square, baseLength, baseLength, image, camera);
                     darkColor = render(darkRotation, darkPosition, 0, square, baseLength, baseLength, image, camera);
-
-					if (isMultiTexShaders)
+                    if (this.exportWithMainCamera)
+                    {
+						Color32[] alphaOverlay = render(lightRotation, lightPosition, 0, square, baseLength, baseLength, image, auxiliaryCamera);
+                        lightColor = addAlpha(lightColor, alphaOverlay);
+                        darkColor = addAlpha(darkColor, alphaOverlay);
+                    }
+                    if (isMultiTexShaders)
 					{
 						blend(lightColor, lightOverlay);
 						blend(darkColor, darkOverlay);
