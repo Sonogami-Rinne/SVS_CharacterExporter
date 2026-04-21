@@ -580,13 +580,18 @@ internal class PmxBuilder
 
                     lightColor = render(lightRotation, lightPosition, 0, square, baseLength, baseLength, image, camera);
                     darkColor = render(darkRotation, darkPosition, 0, square, baseLength, baseLength, image, camera);
-                    if (this.exportWithMainCamera)
-                    {
-						Color32[] alphaOverlay = render(lightRotation, lightPosition, 0, square, baseLength, baseLength, image, auxiliaryCamera);
-                        lightColor = addAlpha(lightColor, alphaOverlay);
-                        darkColor = addAlpha(darkColor, alphaOverlay);
-                    }
-                    if (isMultiTexShaders)
+					if (this.exportWithMainCamera)
+					{
+						auxiliaryCamera.orthographicSize = 0.5f;
+                        auxiliaryCamera.aspect = 1f;
+                        auxiliaryCamera.transform.position = new UnityEngine.Vector3(0.5f, 0.5f, 1f);
+                        auxiliaryCamera.transform.LookAt(new UnityEngine.Vector3(0.5f, 0.5f, 0f));
+						auxiliaryCamera.transform.hasChanged = true;
+                        Color32[] alphaOverlay = render(lightRotation, lightPosition, 0, square, baseLength, baseLength, image, auxiliaryCamera);
+						lightColor = addAlpha(lightColor, alphaOverlay);
+						darkColor = addAlpha(darkColor, alphaOverlay);
+					}
+					if (isMultiTexShaders)
 					{
 						blend(lightColor, lightOverlay);
 						blend(darkColor, darkOverlay);
