@@ -163,11 +163,11 @@ internal class PmxBuilder
             }
             CreateMeshList();
 
-			//if (nowCoordinate == maxCoord)
-   //         {
-			//	//ExportGagEyes();
-			//}
-            AddAccessory();
+			if (nowCoordinate == maxCoord)
+			{
+				ExportGagEyes();
+			}
+			AddAccessory();
 			ExportLightTexture();
 			if (nowCoordinate < maxCoord)
 			{
@@ -360,7 +360,7 @@ internal class PmxBuilder
 			renders[i].enabled = false;
         }
 
-        string[] ignoredSMRs = { "cf_O_gag_eye_00", "cf_O_gag_eye_01", "cf_O_gag_eye_02", "cf_O_namida_L", "cf_O_namida_M", "cf_O_namida_S", "Highlight_o_body_a_rend", "Highlight_cf_O_face_rend", "o_Mask" };
+        string[] ignoredSMRs = { "cf_O_gag_eye_00", "cf_O_gag_eye_01", "cf_O_gag_eye_02", "Highlight_o_body_a_rend", "Highlight_cf_O_face_rend", "o_Mask" };
 		string[] multiTexShaders = { "LIF/lif_main_skin_head", "LIF/lif_main_skin_body" };
 		GameObject light = Light.FindObjectsOfType<Light>()[0].gameObject;
 		Camera camera;
@@ -452,7 +452,7 @@ internal class PmxBuilder
 
                 string matName = smrMaterialsCache[GetGameObjectPath(smr.gameObject)][j];
 
-                lightDarkMaterials.Add(matName);
+				bool addFlag = true;
                 try
                 {
                     Texture mainTex = null;
@@ -596,9 +596,13 @@ internal class PmxBuilder
 						blend(lightColor, lightOverlay);
 						blend(darkColor, darkOverlay);
 					}
+					addFlag = checkNoTransparent(lightColor) || checkNoTransparent(darkColor);
 
-                    TextureSaver.SaveTexture(lightColor, baseLength, baseLength, currentSavePath + "/pre_light/" + matName + "_light.png");
-                    TextureSaver.SaveTexture(darkColor, baseLength, baseLength, currentSavePath + "/pre_dark/" + matName + "_dark.png");
+                    if (addFlag)
+					{
+                        TextureSaver.SaveTexture(lightColor, baseLength, baseLength, currentSavePath + "/pre_light/" + matName + "_light.png");
+                        TextureSaver.SaveTexture(darkColor, baseLength, baseLength, currentSavePath + "/pre_dark/" + matName + "_dark.png");
+                    }
 					if (customSize)
 					{
                         Texture2D.DestroyImmediate(image);
@@ -872,13 +876,30 @@ internal class PmxBuilder
                             material.SetTexture("_Under_hair_texture", null);
                         }
                     }
-				}
+					
+					bool checkNoTransparent(Color32[] colors)
+					{
+						for (int i = 0; i < colors.Length; i++)
+						{
+							if (colors[i].a != 0)
+							{
+								return false;
+							}
+						}
+						return true;
+                    }
+                }
                 catch (Exception ex)
                 {
+					addFlag = false;
                     Console.WriteLine(ex.Message);
                 }
                 finally
                 {
+					if (addFlag)
+					{
+                        lightDarkMaterials.Add(matName);
+                    }
                     if (material != null)
                     {
                         Material.Destroy(material);
@@ -1840,7 +1861,9 @@ internal class PmxBuilder
             "cf_t_expression_00", "cf_t_expression_01"
         };
 		var loadedBundles = AssetBundle.GetAllLoadedAssetBundles().ToList();
-		foreach (var bundle in loadedBundles)
+        Human human = SVSExporterPlugin.selectedChara;
+		
+        foreach (var bundle in loadedBundles)
 		{
 			if (bundle.name.Contains("mt_eye_000_00"))
 			{
@@ -1849,10 +1872,9 @@ internal class PmxBuilder
 					if (names.Contains(i.name))
 					{
 						Texture2D texture = i.TryCast<Texture2D>();
-						TextureSaver.SaveTexture(texture, savePath + i.name + ".png");
+						TextureSaver.SaveTexture((Texture)texture, savePath + i.name + ".png");
 						Texture2D.Destroy(texture);
 					}
-					UnityEngine.Object.Destroy(i);
 				}
             }
 		}
