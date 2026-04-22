@@ -883,10 +883,10 @@ internal class PmxBuilder
 						{
 							if (colors[i].a != 0)
 							{
-								return false;
+								return true;
 							}
 						}
-						return true;
+						return false;
                     }
                 }
                 catch (Exception ex)
