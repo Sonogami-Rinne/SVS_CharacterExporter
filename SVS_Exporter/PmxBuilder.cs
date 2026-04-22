@@ -596,7 +596,7 @@ internal class PmxBuilder
 						blend(lightColor, lightOverlay);
 						blend(darkColor, darkOverlay);
 					}
-					addFlag = checkNoTransparent(lightColor) || checkNoTransparent(darkColor);
+					addFlag = checkNotTransparent(lightColor) || checkNotTransparent(darkColor);
 
                     if (addFlag)
 					{
@@ -877,7 +877,7 @@ internal class PmxBuilder
                         }
                     }
 					
-					bool checkNoTransparent(Color32[] colors)
+					bool checkNotTransparent(Color32[] colors)
 					{
 						for (int i = 0; i < colors.Length; i++)
 						{
