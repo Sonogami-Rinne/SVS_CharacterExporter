@@ -19,7 +19,7 @@ internal class MaterialDataComplete
         {
             CoordinateType = PmxBuilder.nowCoordinate;
         }
-        SMRName = smr.name;
+        SMRName = PmxBuilder.CleanUpName(smr.name);
         //SMRName = ((pmxBuilder.ignoreList.Contains(SMRName, StringComparer.Ordinal) && smr.sharedMaterials.Count() > 0 && pmxBuilder.ignoreList.Contains(PmxBuilder.CleanUpName(smr.sharedMaterial.name), StringComparer.Ordinal)) ? SMRName : (SMRName + " " + PmxBuilder.GetAltInstanceID(smr)));
         SMRName = ((pmxBuilder.ignoreList.Contains(SMRName, StringComparer.Ordinal)) ? SMRName : (SMRName + " " + PmxBuilder.GetAltInstanceID(smr)));
         SMRPath = PmxBuilder.GetGameObjectPath(smr.gameObject);
@@ -28,9 +28,9 @@ internal class MaterialDataComplete
             if ((bool)smr.materials[i])
             {
                 string name = smr.materials[i].name;
-                name = PmxBuilder.CleanUpName(name);
-                name = ((!pmxBuilder.ignoreList.Contains(name, StringComparer.Ordinal) || !pmxBuilder.ignoreList.Contains(smr.name, StringComparer.Ordinal)) ? (name + " " + PmxBuilder.GetAltInstanceID(smr.transform.parent.gameObject)) : ((!name.Contains(pmxBuilder.EyeMatName)) ? name : (name + "_" + smr.name)));
-                //name = PmxBuilder.GetAltMaterialName(pmxBuilder, name);
+                name = PmxBuilder.CleanUpNameClone(name);
+                name = ((!pmxBuilder.ignoreList.Contains(name, StringComparer.Ordinal) || !pmxBuilder.ignoreList.Contains(smr.name, StringComparer.Ordinal)) ? (name + " " + PmxBuilder.GetAltInstanceID(smr.transform.parent.gameObject)) : name);
+                name = PmxBuilder.GetAltMaterialName(pmxBuilder, name);
                 MaterialInformation.Add(new MaterialInfo(smr.materials[i], name));
             }
         }
