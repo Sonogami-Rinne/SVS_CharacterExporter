@@ -20,7 +20,7 @@ Click the Export button, a folder will pop up after a few minutes. (This takes l
 
 ---
 
-Then Install the plugin for blender(modified from ([KKBP](https://gitgoon.dev/kkbp-dev/KKBP_Importer)) to import the model.pmx in the folder (not the one in outfit folder)
+Then Install the plugin for blender(([SVS branch of KKBP](https://gitgoon.dev/kkbp-dev/KKBP_Importer/src/branch/SVS_Compatible)) to import the model.pmx in the folder
 
 <img width="527" height="571" alt="屏幕截图 2025-09-21 164546" src="https://github.com/user-attachments/assets/71ab8fdd-6c01-48e0-b357-adaffba1df3a" />
 
