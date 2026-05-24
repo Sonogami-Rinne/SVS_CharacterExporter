@@ -1197,7 +1197,7 @@ internal class PmxBuilder
 			
             componentsInChildren[i].BakeMesh(mesh);
 
-			if (nowCoordinate == maxCoord)
+            if (nowCoordinate == maxCoord)
 			{
 				vertexCountRecord.Add(componentsInChildren[i].name + componentsInChildren[i].sharedMaterial.name, total);
 				total += mesh.vertexCount;
@@ -1926,9 +1926,12 @@ internal class PmxBuilder
 	public void CreateCharacterInfoData()
 	{
         Human human = SVSExporterPlugin.selectedChara;
+        StateMiniSelection state = UnityEngine.Object.FindObjectOfType<StateMiniSelection>();
         StateMiniSelection stateMiniSelection = GameObject.Find("Cvs_StateMiniWindow").GetComponent<StateMiniSelection>();
         var face = human.face;
 		var eyes = face.eyesCtrl;
+		var eyebrows = face.eyebrowCtrl;
+		var mouth = face.mouthCtrl;
 		var eyeMatControllerl = face.eyeLookMatCtrl[0]._eyeLR == ILLGames.Unity.Animations.EYE_LR.EYE_L ? face.eyeLookMatCtrl[0] : face.eyeLookMatCtrl[1];
 		var eyeMatControllerr = face.eyeLookMatCtrl[0]._eyeLR == ILLGames.Unity.Animations.EYE_LR.EYE_R ? face.eyeLookMatCtrl[0] : face.eyeLookMatCtrl[1];
 
@@ -1949,23 +1952,49 @@ internal class PmxBuilder
 		};
 
         List<BlendShapeinfo> blendShapeinfos = new();
+        ListInfoBase lib;
 
         var patterns = Human.lstCtrl.GetCategoryInfo(ChaListDefine.CategoryNo.cha_eyeset);
-		List<string> ptnNames = new();
-
-		foreach (var name in patterns.Values)
-		{
-			ptnNames.Add(name.Name);
-		}
 		
         face.ChangeEyesOpenMax(1);
         face.ChangeEyesShaking(false);
         face.ChangeEyesBlinkFlag(false);
         face.ChangeEyesPtn(1, false);
 
-        for (int j = 0; j < ptnNames.Count; j++)
+        for (int j = 0; j < patterns.Count; j++)
         {
-            BlendShapeinfo bld = new BlendShapeinfo(ptnNames[j], "Eye");
+            lib = patterns[j];
+            BlendShapeinfo bld = new BlendShapeinfo(lib.Name, "Eye", j == 0);
+            string tex = lib.GetInfo(ChaListDefine.KeyType.MainTex);
+            if (tex != "0")
+            {
+                bld.gagMaterialTex = tex;
+                bld.gagMaterialTexR = lib.GetInfo(ChaListDefine.KeyType.Texture2);
+                bld.gagEye = 0;
+                bld.vector3TileAnimation = new List<float>();
+                foreach (var _ in lib.GetInfo(ChaListDefine.KeyType.TileAnimation).Split("/"))
+                {
+                    bld.vector3TileAnimation.Add(float.Parse(_));
+                }
+                bld.vector3TileAnimationR = new List<float>();
+                foreach(var _ in lib.GetInfo(ChaListDefine.KeyType.TileAnimationR).Split("/"))
+                {
+                    bld.vector3TileAnimationR.Add(float.Parse(_));
+                }
+                bld.sizeSpeed = float.Parse(lib.GetInfo(ChaListDefine.KeyType.SizeSpeed));
+                bld.sizeSpeedR = float.Parse(lib.GetInfo(ChaListDefine.KeyType.SizeSpeedR));
+                bld.sizeWidth = float.Parse(lib.GetInfo(ChaListDefine.KeyType.SizeWidth));
+                bld.sizeWidthR = float.Parse(lib.GetInfo(ChaListDefine.KeyType.SizeWidthR));
+                bld.angleSpeed = float.Parse(lib.GetInfo(ChaListDefine.KeyType.AngleSpeed));
+                bld.angleSpeedR = float.Parse(lib.GetInfo(ChaListDefine.KeyType.AngleSpeedR));
+                bld.yurayura = float.Parse(lib.GetInfo(ChaListDefine.KeyType.Yurayura));
+                string esp = lib.GetInfo(ChaListDefine.KeyType.EpsTex);
+                if (esp != "0")
+                {
+                    bld.isExpression = true;
+                    bld.expressionMaterialTex = esp;
+                }
+            }
             blendShapeinfos.Add(bld);
             face.ChangeEyesPtn(j, false);
 			face.fbsCtrl.OnLateUpdate(0);
@@ -1985,6 +2014,60 @@ internal class PmxBuilder
             }
         }
         face.ChangeEyesPtn(0, false);
+		face.ChangeEyebrowOpenMax(1);
+		face.ChangeEyebrowPtn(1, false);
+
+        int ptnCount = state._expPack.BrowPtn.max;
+
+        for (int j = 0; j < ptnCount; j++)
+        {
+            BlendShapeinfo bld = new BlendShapeinfo("Eyebrow " + j, "Eyebrow", j == 0);
+            blendShapeinfos.Add(bld);
+            face.ChangeEyebrowPtn(j, false);
+            face.fbsCtrl.OnLateUpdate(0);
+            eyebrows.CalculateBlendShape(0);
+
+            foreach (var __ in eyebrows.FBSTarget)
+            {
+                var smr = __.GetSkinnedMeshRenderer();
+                for (int k = 0; k < smr.sharedMesh.blendShapeCount; k++)
+                {
+                    float weight = smr.GetBlendShapeWeight(k);
+                    if (weight > 0)
+                    {
+                        bld.Add(smr.sharedMesh.GetBlendShapeName(k), weight);
+                    }
+                }
+            }
+        }
+
+        face.ChangeEyebrowPtn(0, false);
+        face.ChangeMouthOpenMax(0);
+        face.ChangeMouthPtn(1, false);
+
+        ptnCount = state._expPack.MouthPtn.max;
+
+        for (int j = 0; j < ptnCount; j++)
+        {
+            BlendShapeinfo bld = new BlendShapeinfo("Mouth " + j, "Mouth", j == 0);
+            blendShapeinfos.Add(bld);
+            face.ChangeMouthPtn(j, false);
+            face.fbsCtrl.OnLateUpdate(0);
+            mouth.CalculateBlendShape(0);
+
+            foreach (var __ in mouth.FBSTarget)
+            {
+                var smr = __.GetSkinnedMeshRenderer();
+                for (int k = 0; k < smr.sharedMesh.blendShapeCount; k++)
+                {
+                    float weight = smr.GetBlendShapeWeight(k);
+                    if (weight > 0)
+                    {
+                        bld.Add(smr.sharedMesh.GetBlendShapeName(k), weight);
+                    }
+                }
+            }
+        }
 
 
         UnityEngine.Vector2 _vecl = eyeMatControllerl.material.GetTextureOffset("_Pipil_texture");
