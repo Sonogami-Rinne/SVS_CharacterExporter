@@ -124,6 +124,7 @@ internal class PmxBuilder
 		yield return new WaitForSeconds(0.4f);
 		Prepare();
         nowCoordinate = exportAllOutfits ? 0 : human.fileStatus.coordinateType;
+        minCoord = nowCoordinate;
 		maxCoord = exportAllOutfits ? human.coorde.data.Coordinates.Length : nowCoordinate + 1;
 
 		for (; nowCoordinate < maxCoord + 1; nowCoordinate++)
@@ -149,12 +150,13 @@ internal class PmxBuilder
 		{
 			ResetPmxBuilder();
 			CreateModelInfo();
-			CreateInstanceIDs();
+            ClearMorphs();
+            CreateInstanceIDs();
             SetSavePath();
             Directory.CreateDirectory(currentSavePath);
             Directory.CreateDirectory(currentSavePath + "/pre_light");
             Directory.CreateDirectory(currentSavePath + "/pre_dark");
-            ClearMorphs();
+            
 
             if (nowCoordinate < maxCoord)
             {
@@ -629,6 +631,7 @@ internal class PmxBuilder
                         var data = _.GetPixels32();
                         camera.targetTexture = null;
                         renderTexture.Release();
+                        RenderTexture.Destroy(renderTexture);
                         return data;
                     }
 
